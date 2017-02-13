@@ -1,0 +1,367 @@
+/* marcr.org style */
+
+.specific-types-display {
+ padding-top: 10px;
+}
+
+.specific-types-display ul {
+ padding-top: 10px;
+}
+
+.specific-types-display ul li {
+ font-size: 115%;
+ font-weight: bold;
+ padding: 5px 0px 5px 0px;
+}
+
+
+.section-text {
+ font-size: 110%;
+ font-weight: bold;
+ padding: 10px 10px 15px 10px;
+}
+
+
+.footer .container p {
+	border-top: 1px solid grey;
+	margin-top: 30px;
+	padding-top: 30px;
+	text-align: center;
+	color: grey;
+}        
+
+.overview .prose p {
+padding-left: 20px;
+font-size: 110%;
+line-height: 150%;
+}
+
+.overview .prose ul {
+padding-top: 10px;
+font-size: 110%;
+line-height: 150%;
+}
+
+.overview .prose ul li {
+margin-left: 30px;
+line-height: 150%;
+}
+
+.overview h1 {
+padding-top: 10px;
+padding-bottom: 20px;
+}
+
+
+/********************
+Stats styles
+********************/
+#fields {
+    border:1px solid #D3D3D3;
+}
+
+#fields ul li {
+
+    line-height:2em;
+    border-bottom:1px solid #D3D3D3;
+    padding:0 1%;
+    width: 95%;
+}
+
+#fields ul li:hover {
+    background-color: #e6EEEE;
+}
+
+#fields ul .selected {
+    background-color: #e6EEEE;
+}
+
+
+
+
+/********************
+Ontology-specific styles
+********************/
+.pORcTable {
+	border: 1px solid grey;
+	margin-left: 5%;
+	margin-right: 5%;
+	padding: 2px;
+	width: 90%;
+	max-width: 90%;
+	table-layout: fixed;
+}
+
+.ontTRheading {
+	font-weight: bold;
+	font-size: 14px;
+	background-color: rgb(240, 240, 240);
+}
+
+.ontTDleft {
+	width: 15%;
+}
+
+.ontTDright {
+	width: 85%;
+}
+
+.ontTDbottomrow {
+	padding-top: 15px;
+	width: 100%;
+	font-size: 10px;
+	text-align: right;
+}
+
+
+/* 
+    Tab display refinements
+    because completing the border around the 
+    tab content is not something bootstrap
+    has considered, though oddly the tabs
+    themselves are bordered.  Ach so.
+*/
+.tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+}
+
+.nav-tabs {
+    margin-bottom: 0;
+}
+
+.nav-tabs li a {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+
+
+
+
+/* exhibit styles */
+
+.results ul {
+list-style-type: none;
+padding: 0px;
+margin: 0px;
+}
+
+.results ul.instance li {
+ padding-top: 3px;
+}
+
+
+.name {
+ padding-left: 5px;
+ padding-right: 5px;
+}
+
+
+.publishedOn {
+padding-left: 2px;
+padding-right: 2px;
+font-style: italic;
+}
+
+.publisher {
+padding-left: 2px;
+padding-right: 2px;
+color: slategrey;
+}
+
+.property {
+font-weight: bold;
+color: slategrey;
+}
+
+
+.workTitle {
+font-weight: bold;
+font-size: 130%;
+}
+
+.instanceTitle {
+font-weight: bold;
+font-size: 110%;
+}
+
+table .instance-table {
+  border: none;
+}
+
+td.property {
+  width: 90px;
+}
+
+table .instance-table td {
+  border: none;
+}
+
+table .instance-table {
+    border-bottom: 1px solid lightgrey;
+  margin-bottom: 5px;
+  margin-left: -5px
+}
+
+.holdingsAnnotation button {
+margin-top: -15px;
+margin-left: 25px;
+}
+
+.holdingsAnnotation button .text {
+  margin-left: 5px;
+}
+.holdingsAnnotation .annotation-body {
+ 
+  margin-left: 25px;
+  padding: 5px 5px;  
+}
+
+
+/* type refinements */
+
+/* type refinements */
+
+.specific-types-display ul {
+   display: inline-table;
+   text-align: center;
+   margin-left: 0;
+}
+
+.specific-types-display ul li {
+   border: solid 1px lightgrey;
+   padding: 10px 10px;
+   display: block;
+   float: left;
+   list-style-type: none;
+   margin: 5px;
+   text-align: center;
+}
+
+
+/* icons for MARC classes (builds off of bootstrap icon patterns) */
+
+.icon-Person {                        /* icon-user */
+  background-position: -168px 0;
+}
+
+.icon-Topic {                           /* icon-tag */
+  background-position: 0 -48px;
+}
+
+.icon-Organization {                           /* icon-home */
+  background-position: 0 -24px;
+}
+
+.icon-Place {                                   /* icon-map-marker */
+  background-position: -24px -72px;
+}
+
+.icon-Geographic {                                   /* icon-map-marker */
+  background-position: -24px -72px;
+}
+
+.icon-Meeting {                                   /* icon-briefcase */
+  background-position: -432px -144px;
+}
+
+/* icons for MARCR types */
+
+.icon-Article {                                   /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-Report {                                   /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-Site {                                   /* icon-list-alt */
+  background-position: -264px -24px;
+}
+
+.icon-DigitalResource-null {                         /* icon-globe */
+  background-position: -336px -144px;
+}
+
+.icon-DigitalResource-PDF {                         /* icon-globe */
+  background-position: -336px -144px;
+}
+
+.icon-DigitalResource-WWW {                         /* icon-globe */
+  background-position: -336px -144px;
+}
+
+.icon-WebPage-WWW {                         /* icon-globe */
+  background-position: -336px -144px;
+}
+
+.icon-EBook-null {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-EBook-Kindle {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+
+.icon-PopupBook {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-PhysicalResource-null {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-PhysicalResource-Volume {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-PaperbackBook-null {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-PaperbackBook-Volume {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+.icon-HardcoverBook-null {                         /* icon-book */
+  background-position: -48px -48px;
+}
+.icon-HardcoverBook-Volume {                         /* icon-book */
+  background-position: -48px -48px;
+}
+
+
+/* exhibit */
+
+.titleWork {
+  line-height: 120%;
+  font-weight: bold;
+  font-size: 140%;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.titleInstance {
+  font-weight: bold;
+  font-size: 120%;                 
+  line-height: 120%;
+  padding-bottom: 5px;
+}
+
+.table {
+  margin-top: 10px;
+}
+
+
+/* font awsome mappings to bibframe classes */
+
+.icon-bf-Topic:before                  { content: "\f02b"; }
+.icon-bf-Genre:before                 { content: "\f008"; }
+.icon-bf-Place:before           { content: "\f041"; }
+.icon-bf-Organization:before                 { content: "\f015"; }
+.icon-bf-Person:before                 { content: "\f007"; }
+.icon-bf-Instance:before             { content: "\f0ec"; }

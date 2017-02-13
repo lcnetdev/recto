@@ -1,0 +1,98 @@
+@import url("./style.css");
+
+body.draft {
+      background: #fff url(/images/bibframe-community-draft.png) 0 3em fixed no-repeat;
+      min-height: 240px;
+      padding-left: 0px;
+      padding-right: 0px;
+}
+
+.toc ol {
+  counter-reset: section;
+  list-style-type: none;
+}
+                
+.toc ol li { counter-increment: section; }
+           
+.toc ol li:before  { content: counters(section, ".") ". "; }
+
+.body { counter-reset: section; }
+       
+.section h2 { 
+       counter-increment: section;
+       counter-reset: sub-section;
+}
+
+.section h3 { 
+       counter-reset: sub-sub-section;
+}
+
+.section h4:before {
+       counter-increment: sub-sub-section;
+}
+                                                       
+/* .section h2:before, .section h3:before { content: counter(section) "." counter(sub-section) " "; }  */
+
+.section h2:before { content: counter(section) "." " "; }  
+
+.section .subsection h3:before { content: counter(section) "." counter(sub-section) "." " "; } 
+
+.section .subsection .subsubsection h4:before { content: counter(section) "." counter(sub-section) "." counter(sub-sub-section) "." " "; } 
+
+.section h3:before {
+       counter-increment: sub-section;
+}
+
+/* .section h3:before, .section h4:before { content: counter(section) "." counter(sub-section) "." counter(sub-sub-section) "." " "; }  */
+
+
+/* Ray's additions for the Annotations doc */
+.style3 {color: #666666}
+.style4 {color: #333333}
+.style7 {color: #333333; font-style: italic; }
+
+.hrdiv {
+    border: 0; 
+    height: 1px; 
+    background-image: -webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0)); 
+    background-image: -moz-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0)); 
+    background-image: -ms-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0)); 
+    background-image: -o-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+}
+
+.table-rays {
+   border: 1px solid blue;
+   background-color: #EAEAEA
+}
+
+.table-raystriplesheader {
+    margin-bottom: 0px
+}
+
+.table-raystriplesheader td:first-child{
+   width: 5%;
+}
+
+.table-raystriplesheader td:nth-child(2){
+   width: 45%;
+}
+
+.table-raystriplesheader td:nth-child(3){
+   width: 10%;
+}
+
+.table-raystriples {
+    margin-top: 0px
+}
+
+.table-raystriples td:first-child{
+   width: 5%;
+}
+
+.table-raystriples td:nth-child(2){
+   width: 25%;
+}
+
+.table-raystriples td:nth-child(3){
+   width: 20%;
+}

@@ -1,0 +1,27 @@
+{
+  "name": "recto",
+  "version": "1.0.0",
+  "description": "BIBFRAME Pilot User interface",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bibliomata/Recto.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Bibliomata/Recto/issues"
+  },
+  "homepage": "https://github.com/Bibliomata/Recto#readme",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "express": "^4.14.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}
