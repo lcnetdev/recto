@@ -19,7 +19,8 @@
   "homepage": "https://github.com/Bibliomata/Recto#readme",
   "dependencies": {
     "body-parser": "^1.16.0",
-    "express": "^4.14.1"
+    "express": "^4.14.1",
+    "rdflib": "^0.14.0"
   },
   "devDependencies": {
     "nodemon": "^1.11.0"
