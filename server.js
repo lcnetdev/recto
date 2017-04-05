@@ -3,6 +3,8 @@ const app = express();
 const path = require('path');
 const bodyParser = require('body-parser');
 const profile = "/bfe/static/profiles/bibframe/";
+const fs = require('fs');
+const _ = require('underscore');
 
 app.listen(3000, function() {
   console.log('listening on 3000');
@@ -24,6 +26,36 @@ app.use('/profile-edit', express.static(path.join(__dirname, '/profile-edit/sour
 app.use('/bfe', express.static(path.join(__dirname, '/bfe')));
 
 //RESTful route
+//BFE
+var apirouter = express.Router();
+
+apirouter.use(function(req, res, next) {
+    console.log(req.method, req.url);
+    next();
+});
+
+var api_list = apirouter.route('/list');
+
+api_list.get(function(req,res){
+   fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
+       //console.log( data );
+       res.json( JSON.parse(data) );
+   });
+})
+
+var api_get = apirouter.route('/:id');
+
+api_get.get(function (req, res) {
+   // First read existing users.
+   fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
+        json = JSON.parse( data );
+        var description = _.where(json, {id: + req.params.id});
+        //console.log(description);
+        res.json(description);
+   });
+})
+
+//Profile Edit
 var router = express.Router();
 
 router.use(function(req, res, next) {
@@ -181,3 +213,4 @@ var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
 
 
 app.use('/profile-edit/server', router);
+app.use('/api', apirouter);

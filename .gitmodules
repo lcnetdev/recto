@@ -4,3 +4,6 @@
 [submodule "bfe"]
 	path = bfe
 	url = https://kirkhess:vid1Ak1d@github.com/shmccallum/bfeditor.git
+[submodule "bfeditor"]
+	path = bfeditor
+	url = https://kirkhess:vid1Ak1d@github.com/shmccallum/bfeditor.git
