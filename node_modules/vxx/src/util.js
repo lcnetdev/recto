@@ -16,53 +16,26 @@
 
 'use strict';
 
+var Module = require('module');
+var fs = require('fs');
 var path = require('path');
 
 /**
- * Produces an object summarization of limited size. This summarization
- * does not adhere to the JSON spec so it cannot be reparsed even if
- * the entire object fits inside the desired size.
- *
- * @param {Object} o The object to be summarized.
- * @param {number} n Max length of the summary.
+ * Truncates the provided `string` to be at most `length` bytes
+ * after utf8 encoding and the appending of '...'.
+ * We produce the result by iterating over input characters to
+ * avoid truncating the string potentially producing partial unicode
+ * characters at the end.
  */
-function stringifyPrefix(o, n) {
-  var buf = new Buffer(n);
-  var pos = 0;
-  var worklist = [];
-  function pushObject(o) {
-    var keys = Object.keys(o);
-    for (var i = Math.min(keys.length - 1, Math.floor(n/4)); i >= 0; i--) {
-      worklist.push((i === keys.length - 1) ? '}' : ',');
-      worklist.push(o[keys[i]]);
-      worklist.push(':');
-      worklist.push(keys[i]);
-    }
-    worklist.push('{');
+function truncate(string, length) {
+  if (Buffer.byteLength(string, 'utf8') <= length) {
+    return string;
   }
-  worklist.push(o);
-  while (worklist.length > 0) {
-    var elem = worklist.pop();
-    if (elem && typeof elem === 'object') {
-      pushObject(elem);
-    } else {
-      var val;
-      if (typeof elem === 'function') {
-        val = '[Function]';
-      } else if (typeof elem === 'string') {
-        val = elem;
-      } else {
-        // Undefined, Null, Boolean, Number, Symbol
-        val = String(elem);
-      }
-      pos += buf.write(val, pos);
-      if (buf.length === pos) {
-        buf.write('...', pos - 3);
-        break;
-      }
-    }
+  string = string.substr(0, length - 3);
+  while (Buffer.byteLength(string, 'utf8') > length - 3) {
+    string = string.substr(0, string.length - 1);
   }
-  return buf.toString('utf8', 0, pos);
+  return string + '...';
 }
 
 // Includes support for npm '@org/name' packages
@@ -78,6 +51,33 @@ var moduleRegex = new RegExp(
 );
 
 /**
+ * Parse a cookie-style header string to extract traceId, spandId and options
+ * ex: '123456/667;o=3'
+ * -> {traceId: '123456', spanId: '667', options: '3'}
+ * note that we ignore trailing garbage if there is more than one '='
+ * Returns null if traceId or spanId could not be found.
+ *
+ * @param {string} str string representation of the trace headers
+ * @return {?{traceId: string, spanId: string, options: number}}
+ *         object with keys. null if there is a problem.
+ */
+function parseContextFromHeader(str) {
+  if (!str) {
+    return null;
+  }
+  var matches = str.match(/^([0-9a-fA-F]+)(?:\/([0-9a-fA-F]+))?(?:;o=(.*))?/);
+  if (!matches || matches.length !== 4 || matches[0] !== str ||
+      (matches[2] && isNaN(matches[2]))) {
+    return null;
+  }
+  return {
+    traceId: matches[1],
+    spanId: matches[2],
+    options: Number(matches[3])
+  };
+}
+
+/**
  * Retrieves a package name from the full import path.
  * For example:
  *   './node_modules/bar/index/foo.js' => 'bar'
@@ -89,7 +89,46 @@ function packageNameFromPath(path) {
   return matches && matches.length > 1 ? matches[1] : null;
 }
 
+/**
+ * Determines the path at which the requested module will be loaded given
+ * the provided parent module.
+ *
+ * @param {string} request The name of the module to be loaded.
+ * @param {object} parent The module into which the requested module will be loaded.
+ */
+function findModulePath(request, parent) {
+  var mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
+  var resolvedModule = Module._resolveLookupPaths(request, parent);
+  var paths = resolvedModule[1];
+  for (var i = 0, PL = paths.length; i < PL; i++) {
+    if (mainScriptDir.indexOf(paths[i]) === 0) {
+      return path.join(paths[i], request.replace('/', path.sep));
+    }
+  }
+  return null;
+}
+
+/**
+ * Determines the version of the module located at `modulePath`.
+ *
+ * @param {?string} modulePath The absolute path to the root directory of the
+ *    module being loaded. This may be null if we are loading an internal module
+ *    such as http.
+ */
+function findModuleVersion(modulePath, load) {
+  if (modulePath) {
+    var pjson = path.join(modulePath, 'package.json');
+    if (fs.existsSync(pjson)) {
+      return load(pjson).version;
+    }
+  }
+  return process.version;
+}
+
 module.exports = {
-  stringifyPrefix: stringifyPrefix,
-  packageNameFromPath: packageNameFromPath
+  truncate: truncate,
+  parseContextFromHeader: parseContextFromHeader,
+  packageNameFromPath: packageNameFromPath,
+  findModulePath: findModulePath,
+  findModuleVersion: findModuleVersion
 };

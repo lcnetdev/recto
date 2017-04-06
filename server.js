@@ -5,10 +5,11 @@ const bodyParser = require('body-parser');
 const profile = "/bfe/static/profiles/bibframe/";
 const fs = require('fs');
 const _ = require('underscore');
+var proxy = require('http-proxy-middleware');
 
-app.listen(3000, function() {
-  console.log('listening on 3000');
-})
+versoProxy = proxy({target: 'http://mlvlp04.loc.gov:3001', pathRewrite: {'^/verso' : '/', '^/explorer': '/'}});
+
+app.use("/verso", versoProxy);
 
 //app.get('/', function(req, res) {
 //  res.sendFile(__dirname + '/editor.html')
@@ -24,6 +25,11 @@ app.use(express.static(__dirname + '/'));
 
 app.use('/profile-edit', express.static(path.join(__dirname, '/profile-edit/source')));
 app.use('/bfe', express.static(path.join(__dirname, '/bfe')));
+
+app.listen(3000, function() {
+  console.log('listening on 3000');
+})
+
 
 //RESTful route
 //BFE

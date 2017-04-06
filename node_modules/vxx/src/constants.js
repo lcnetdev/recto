@@ -18,10 +18,10 @@
 
 module.exports = {
   /** @const {string} header that carries trace context across Google infrastructure. */
-  TRACE_CONTEXT_HEADER_NAME: 'x-km-trace-context',
+  TRACE_CONTEXT_HEADER_NAME: 'x-cloud-trace-context',
 
   /** @const {string} header that is used to identify outgoing http made by the agent. */
-  TRACE_AGENT_REQUEST_HEADER: 'x-km-trace-agent-request',
+  TRACE_AGENT_REQUEST_HEADER: 'x-cloud-trace-agent-request',
 
   /** @const {number} bitmask to determine whether trace is enabled in trace options. */
   TRACE_OPTIONS_TRACE_ENABLED: 1 << 0,
