@@ -93,7 +93,7 @@
         }
 
         function deleteId(id, csrf, bfelog){
-            var url = "http://mlvlp04.loc.gov:3000/api/" + id;
+            var url = "http://bibframe.org:3000/api/" + id;
 
             //$.ajaxSetup({
             //    beforeSend: function(xhr, settings){getCSRF(xhr, settings, csrf);}
@@ -122,6 +122,8 @@
             },*/
             "baseURI": "http://bibframe.org/",
             "profiles": [
+                "/verso/bfe/static/profiles/bibframe/BIBFRAME 2.0 Agents.json",
+                "/verso/bfe/static/profiles/bibframe/BIBFRAME 2.0 Serial.json",
                 "/static/bfe/static/profiles/bibframe/BIBFRAME Agents.json",
                 "/static/bfe/static/profiles/bibframe/BIBFRAME Annotations.json",
                 "/static/bfe/static/profiles/bibframe/BIBFRAME Authorities.json",
@@ -135,6 +137,16 @@
                 "/static/bfe/static/profiles/bibframe/WEI-Audio\ CD.json"
             ],
             "startingPoints": [
+
+                        {"menuGroup": "BF 2.0 Agents",
+                        "menuItems": [
+                            {
+                                label: "Agent",
+                                type: ["http://id.loc.gov/ongologies/bibframe/Agent"],
+                                useResourceTemplates: [ "profile:bf:Agents2" ]
+                            }
+
+                        ]},
                         {"menuGroup": "Monograph",
                         "menuItems": [
                             {

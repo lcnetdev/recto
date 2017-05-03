@@ -7,7 +7,7 @@ const fs = require('fs');
 const _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 
-versoProxy = proxy({target: 'http://mlvlp04.loc.gov:3001', pathRewrite: {'^/verso' : '/', '^/explorer': '/'}});
+versoProxy = proxy({target: 'http://bibframe.org:3001', pathRewrite: {'^/verso' : '/', '^/explorer': '/'}});
 
 app.use("/verso", versoProxy);
 
