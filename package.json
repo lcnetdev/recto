@@ -22,6 +22,7 @@
     "express": "^4.14.1",
     "express-http-proxy": "^0.11.0",
     "http-proxy-middleware": "^0.17.4",
+    "marklogic": "^1.0.6",
     "rdflib": "^0.14.0",
     "underscore": "^1.8.3"
   },
