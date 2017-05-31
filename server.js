@@ -7,7 +7,9 @@ const fs = require('fs');
 const _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 
-versoProxy = proxy({target: 'http://mlvlp04.loc.gov:3001', pathRewrite: {'^/verso' : '/', '^/explorer': '/'}});
+versoProxy = proxy({target: 'http://mlvlp04.loc.gov:3001', pathRewrite: {'^/verso' : '/verso'
+//, '^/explorer': '/'
+}});
 
 app.use("/verso", versoProxy);
 
@@ -16,7 +18,8 @@ app.use("/verso", versoProxy);
 //})
 
 app.use(bodyParser.urlencoded({
-    extended: false
+    extended: false,
+    limit: '50mb'    
 }));
 
 app.use(bodyParser.json())
