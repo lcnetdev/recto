@@ -215,11 +215,66 @@ prof_import.post(function(req,res){
 
 });
 
+var prof_rdfxml = router.route('/rdfxml');
+
+prof_rdfxml.post(function(req, res){
+	var rdfTranslator = require('rdf-translator');
+	var xml = require('xml');
+	var json = JSON.stringify(req.body);
+	console.log(json);
+	rdfTranslator(json, 'json-ld', 'pretty-xml', function(err, data){
+	//  if (err) return console.error(err);
+    	//  console.log(data);
+//  	if (err) res.status(500);
+	res.set('Content-Type', 'application/rdf+xml');
+	res.status(200).send(data);
+	});
+});
+
+var prof_turtle2rdfxml = router.route('/n3/rdfxml');
+
+prof_turtle2rdfxml.post(function(req, res){
+        var rdfTranslator = require('rdf-translator');
+        var n3 = req.body.content;
+	console.log(n3);
+        rdfTranslator(n3, 'n3', 'pretty-xml', function(err, data){
+           if (err) res.status(500);
+           res.set('Content-Type', 'application/rdf+xml');
+           res.status(200).send(data);
+        });
+});
 
 
 var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
 //not implemented
 
-
 app.use('/profile-edit/server', router);
 app.use('/api', apirouter);
+
+var passport = require('passport');
+var Strategy = require('passport-http').BasicStrategy;
+
+passport.use(new Strategy(
+  function(username, password, cb) {
+    var options = {
+	host: 'mlvlp01.loc.gov',
+	port: '8201',
+	path: '/authenticate.xqy',
+	headers: {
+		'Authorization': 'Basic' + new Buffer(username + ':' + password).toString('base64')
+	}
+    };
+	
+    request = http.get(options, function(res){
+        res.on('error', function(err) { console.log(err); });
+    });
+    
+    callback(cb);    
+
+  }));
+
+app.post('/login',
+  passport.authenticate('basic', { successRedirect: '/',
+                                   failureRedirect: '/login',
+                                   failureFlash: false })
+);
