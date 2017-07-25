@@ -3,6 +3,7 @@ const app = express();
 const path = require('path');
 const bodyParser = require('body-parser');
 const profile = "/bfe/static/profiles/bibframe/";
+const resources = "/resources/";
 const fs = require('fs');
 const _ = require('underscore');
 var proxy = require('http-proxy-middleware');
@@ -242,6 +243,25 @@ prof_turtle2rdfxml.post(function(req, res){
            res.set('Content-Type', 'application/rdf+xml');
            res.status(200).send(data);
         });
+});
+
+var prof_publish = router.route('/publish');
+
+prof_publish.post(function(req,res){
+   console.log(req.body);
+
+   var fs = require('fs');
+   var dirname = __dirname + resources;
+   var name = req.body.name + ".rdf";
+   var rdfxml = JSON.parse(req.body.rdfxml); 
+   var path = dirname + name;
+   //console.log(req.params);
+   console.log(path);
+   console.log('Got a POST request');
+   fs.writeFile(path, rdfxml, {encoding: 'utf8', mode: 0o777} , function (err) {
+    if (err) res.status(500);    
+    res.status(200).send({"name": name, "url": resources + name});
+   });
 });
 
 
