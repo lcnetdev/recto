@@ -227,6 +227,7 @@ prof_rdfxml.post(function(req, res){
 	//  if (err) return console.error(err);
     	//  console.log(data);
 //  	if (err) res.status(500);
+
 	res.set('Content-Type', 'application/rdf+xml');
 	res.status(200).send(data);
 	});
@@ -264,6 +265,13 @@ prof_publish.post(function(req,res){
    });
 });
 
+var prof_whichrt = router.route('/whichrt');
+
+prof_whichrt.get(function(req,res){
+   var request = require('request');
+   var uri  = req.query.uri;
+   req.pipe(request(uri)).pipe(res);
+});
 
 var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
 //not implemented
