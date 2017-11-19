@@ -265,6 +265,42 @@ prof_publish.post(function(req,res){
    });
 });
 
+var prof_publish_response = router.route('/publishRsp');
+
+prof_publish_response.post(function(req,res){
+   console.log(req.body);
+   var shortuuid = require('short-uuid');
+   var decimaltranslator = shortuuid("0123456789");
+   var request = require('request');
+
+   var name = JSON.stringify({"name": decimaltranslator.toUUID(req.body.name.split(/[a-zA-Z]/)[1])});
+   var objid = req.body.objid;
+   var publish = req.body.publish;
+   var url = "http://localhost:3000/verso/api/bfs?filter="+name;
+   console.log(url);
+   console.log('Got a POST request');
+
+   var poster = function(req, res){
+                var json = JSON.parse(res.body);
+                var id = json.id;
+                delete json.id;
+                json.publish = publish;
+                json.objid = objid;
+                request.post({url:'http://mlvlp04.loc.gov:3000/verso/api/bfs'+id, header:'Content-Type: application/json', json:body},
+                        function (err, res, body){
+                            console.log(err);
+                            if (err) res.status(500);
+                            res.status(200).send({"name": name, "objid": objid});
+                        });
+                
+                };
+
+    req.pipe(request.get(url)).pipe(res);
+
+    res.status(200).send();
+});
+
+
 var prof_whichrt = router.route('/whichrt');
 
 prof_whichrt.get(function(req,res){
