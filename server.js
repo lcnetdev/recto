@@ -250,18 +250,29 @@ var prof_publish = router.route('/publish');
 
 prof_publish.post(function(req,res){
    console.log(req.body);
-
    var fs = require('fs');
+   var objid = req.body.objid;
+   var id = req.body.id;
    var dirname = __dirname + resources;
+   var posted = "/marklogic/applications/natlibcat/admin/bfi/bibrecs/bfe-preprocess/valid/posted/";
    var name = req.body.name + ".rdf";
    var rdfxml = JSON.parse(req.body.rdfxml); 
    var path = dirname + name;
    //console.log(req.params);
    console.log(path);
    console.log('Got a POST request');
+
+   if (fs.existsSync(posted+name)){
+        fs.unlinkSync(posted + name, function(err){
+            if (err) {
+                console.error("Error deleting " + name);
+            }
+       });
+   }
+
    fs.writeFile(path, rdfxml, {encoding: 'utf8', mode: 0o777} , function (err) {
     if (err) res.status(500);    
-    res.status(200).send({"name": name, "url": resources + name});
+    res.status(200).send({"name": name, "url": resources + name, "objid": objid, "id": id});
    });
 });
 
@@ -307,6 +318,14 @@ prof_whichrt.get(function(req,res){
    var request = require('request');
    var uri  = req.query.uri;
    req.pipe(request(uri)).pipe(res);
+});
+
+var prof_checkuri = router.route('/checkuri');
+
+prof_checkuri.head(function(req,res){
+   var request = require('request');
+   var uri  = req.query.uri;
+   req.pipe(request.head(uri)).pipe(res);
 });
 
 var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
