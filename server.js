@@ -283,32 +283,48 @@ prof_publish_response.post(function(req,res){
    var shortuuid = require('short-uuid');
    var decimaltranslator = shortuuid("0123456789");
    var request = require('request');
+   var rp = require('request-promise');
 
-   var name = JSON.stringify({"name": decimaltranslator.toUUID(req.body.name.split(/[a-zA-Z]/)[1])});
-   var objid = req.body.objid;
-   var publish = req.body.publish;
+   var filename = path.basename(req.body.name, path.extname(req.body.name));
+
+   var name = "%7B%22where%22%3A%20%7B%22name%22%3A%20%22" + decimaltranslator.toUUID(filename.split(/[a-zA-Z]/)[1])+ "%22%7D%7D";
    var url = "http://localhost:3000/verso/api/bfs?filter="+name;
    console.log(url);
    console.log('Got a POST request');
 
-   var poster = function(req, res){
-                var json = JSON.parse(res.body);
-                var id = json.id;
-                delete json.id;
-                json.publish = publish;
-                json.objid = objid;
-                request.post({url:'http://mlvlp04.loc.gov:3000/verso/api/bfs'+id, header:'Content-Type: application/json', json:body},
-                        function (err, res, body){
-                            console.log(err);
-                            if (err) res.status(500);
-                            res.status(200).send({"name": name, "objid": objid});
-                        });
-                
+   var json = req.body;
+
+   var options = {  uri: url,
+                    json: true,
+                    transform: function(body){
+                        var postbody = body[0];
+                        postbody.status = json.publish.status;
+                        postbody.objid = json.objid;
+                        return postbody;
+                    }
                 };
 
-    req.pipe(request.get(url)).pipe(res);
+                rp(options).then(function (postbody) {
+                    var id = postbody.id;
+                    delete postbody.id
+                    var posturl = "http://mlvlp04.loc.gov:3000/verso/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
+                    var postoptions = {
+                        method: 'POST',
+                        uri: posturl,
+                        body: postbody,
+                        json: true // Automatically stringifies the body to JSON
+                    };
 
-    res.status(200).send();
+                    rp(postoptions)
+                        .then(function (parsedBody) {
+                            res.status(200).send(parsedBody);
+                        })
+                        .catch(function (err) {
+                            // POST failed...
+                            res.status(404).send(err);
+                        });
+                });
+//                            res.status(200).send({"name": name, "objid": objid});
 });
 
 
