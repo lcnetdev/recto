@@ -175,6 +175,7 @@ prof_save.post(function(req,res){
    console.log(path);
    console.log('Got a POST request');
    fs.writeFile(path, json, {encoding: 'utf8', mode: 0o777} , function (err) {
+    fs.chmod(path, '0777');
     res.status(200);
     res.redirect("back");
    });
