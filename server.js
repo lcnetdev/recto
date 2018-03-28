@@ -217,6 +217,8 @@ prof_import.post(function(req,res){
 
 });
 
+//bfe routes
+// var bfe_rdfxml = bferouter.route('/rdfxml');
 var prof_rdfxml = router.route('/rdfxml');
 
 prof_rdfxml.post(function(req, res){
@@ -234,6 +236,8 @@ prof_rdfxml.post(function(req, res){
 	});
 });
 
+
+// var bfe_turtle2rdfxml = bferouter.route('/n3/rdfxml');
 var prof_turtle2rdfxml = router.route('/n3/rdfxml');
 
 prof_turtle2rdfxml.post(function(req, res){
@@ -246,7 +250,7 @@ prof_turtle2rdfxml.post(function(req, res){
            res.status(200).send(data);
         });
 });
-
+//var bfe_post = bferouter.route('/publish');
 var prof_publish = router.route('/publish');
 
 prof_publish.post(function(req,res){
@@ -277,6 +281,7 @@ prof_publish.post(function(req,res){
    });
 });
 
+//var bfe_publish_response = bferouter.rute('/publishRsp');
 var prof_publish_response = router.route('/publishRsp');
 
 prof_publish_response.post(function(req,res){
@@ -335,7 +340,7 @@ prof_publish_response.post(function(req,res){
 //                            res.status(200).send({"name": name, "objid": objid});
 });
 
-
+//var bfe_retrieveLDS = bferouter.route('/retrieveLDS');
 var prof_retrieveLDS = router.route('/retrieveLDS');
 
 prof_retrieveLDS.get(function(req, res){
@@ -391,6 +396,7 @@ prof_retrieveLDS.get(function(req, res){
 
 });
 
+//var bfe_whichrt = bferouter.route('/whichrt');
 var prof_whichrt = router.route('/whichrt');
 
 prof_whichrt.get(function(req,res){
@@ -411,6 +417,7 @@ var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
 //not implemented
 
 app.use('/profile-edit/server', router);
+app.use('/bfe/server', bferouter);
 app.use('/api', apirouter);
 
 var passport = require('passport');
