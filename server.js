@@ -218,6 +218,7 @@ prof_import.post(function(req,res){
 });
 
 //bfe routes
+var bferouter = express.Router();
 // var bfe_rdfxml = bferouter.route('/rdfxml');
 var prof_rdfxml = router.route('/rdfxml');
 
