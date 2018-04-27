@@ -344,59 +344,81 @@ prof_publish_response.post(function(req,res){
 //var bfe_retrieveLDS = bferouter.route('/retrieveLDS');
 var prof_retrieveLDS = router.route('/retrieveLDS');
 
-prof_retrieveLDS.get(function(req, res){
+prof_retrieveLDS.get(function(req, res) {
 
     var shortuuid = require('short-uuid');
-    
+
     var decimaltranslator = shortuuid("0123456789");
-    
+
     var request = require('request');
-    
+
     var rp = require('request-promise');
-    
+
     var _ = require('lodash');
-    
+
     var instanceURL = req.query.uri;
-    
-    var options = { uri:instanceURL, 
-                    json:true
-                  };
-    
+
+    var options = {
+        uri: instanceURL,
+        json: true
+    };
+
     var workURL, itemURL;
     var jsonldReturn = [];
 
-    rp(options).then(function (instanceBody){
-        workURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:instanceOf']['@id']
+    rp(options).then(function(instanceBody) {
+        //workURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:instanceOf']['@id']
+
+        _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
+            if (!_.isEmpty(value['bibframe:instanceOf'])) {
+                workURL = value['bibframe:instanceOf']['@id'];                    
+            }
+        });
+
         if (_.some(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), "bibframe:hasItem")) {
-        itemURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:hasItem']['@id']
-        workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
-        jsonldReturn = _.concat(instanceBody, jsonldReturn);
-        console.log("Load Work:"+ workURL);
-        return rp({uri:workURL, json:true}).then(function (workBody) {
-            itemURL = itemURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
-            jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"],workBody["@graph"]);
-            return rp({uri:itemURL, json:true}).then(function (itemBody){
-                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
+            //itemURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:hasItem']['@id']
+                        
+            _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
+                if (!_.isEmpty(value['bibframe:hasItem'])) {
+                    itemURL = value['bibframe:instanceOf']['@id'];
+                }
+            });
+
+            workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+            jsonldReturn = _.concat(instanceBody, jsonldReturn);
+            console.log("Load Work:" + workURL);
+            return rp({
+                uri: workURL,
+                json: true
+            }).then(function(workBody) {
+                itemURL = itemURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                return rp({
+                    uri: itemURL,
+                    json: true
+                }).then(function(itemBody) {
+                    jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
+                    res.status(200).send(jsonldReturn[0]);
+                });
+            });
+        } else {
+            workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+            jsonldReturn = _.concat(instanceBody, jsonldReturn);
+            console.log("Load Work:" + workURL);
+            return rp({
+                uri: workURL,
+                json: true
+            }).then(function(workBody) {
+                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
                 res.status(200).send(jsonldReturn[0]);
             });
-        });
-        } else {
-        workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
-        jsonldReturn = _.concat(instanceBody, jsonldReturn);
-        console.log("Load Work:"+ workURL);
-        return rp({uri:workURL, json:true}).then(function (workBody) {
-            jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
-            res.status(200).send(jsonldReturn[0]);
-        });
 
         }
-
     });
 
-//    res.status(200).send(jsonldReturn);
+    //    res.status(200).send(jsonldReturn);
 
 });
-
 //var bfe_whichrt = bferouter.route('/whichrt');
 var prof_whichrt = router.route('/whichrt');
 
