@@ -1,3 +1,5 @@
+/* This script is a helper tool to load profiles stored at recto/bfe/static/profiles into the verso/config database */
+
 const fs = require('fs');
 const request = require('request');
 const bfdir = 'bfe/static/profiles/bibframe';
