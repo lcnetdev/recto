@@ -7,8 +7,11 @@ const resources = "/resources/";
 const fs = require('fs');
 const _ = require('underscore');
 var proxy = require('http-proxy-middleware');
+const proxyAddr = process.env.VERSO_PROXY || 'http://mlvlp04.loc.gov:3001'
 
-versoProxy = proxy({target: 'http://mlvlp04.loc.gov:3001', pathRewrite: {'^/verso' : '/verso'
+console.log(proxyAddr);
+
+versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso'
 //, '^/explorer': '/'
 }});
 
