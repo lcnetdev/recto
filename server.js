@@ -244,16 +244,41 @@ prof_rdfxml.post(function(req, res){
 // var bfe_turtle2rdfxml = bferouter.route('/n3/rdfxml');
 var prof_turtle2rdfxml = router.route('/n3/rdfxml');
 
+//prof_turtle2rdfxml.post(function(req, res){
+//        var rdfTranslator = require('rdf-translator');
+//        var n3 = req.body.n3;
+//        rdfTranslator(n3, 'n3', 'pretty-xml', function(err, data){
+//           //if (err) res.status(500);
+//           res.set('Content-Type', 'application/rdf+xml');
+//           res.status(200).send(data);
+//        });
+//});
+
 prof_turtle2rdfxml.post(function(req, res){
-        var rdfTranslator = require('rdf-translator');
-        var n3 = req.body.content;
-	console.log(n3);
-        rdfTranslator(n3, 'n3', 'pretty-xml', function(err, data){
-           if (err) res.status(500);
-           res.set('Content-Type', 'application/rdf+xml');
-           res.status(200).send(data);
+        var n3 = req.body.n3;
+        var fs = require('fs');
+        var shortuuid = require('short-uuid');
+        var decimaltranslator = shortuuid("0123456789");
+
+        const { exec } = require('child_process');
+        //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
+        var tmpFile = "/tmp/rapper";
+
+        fs.writeFile(tmpFile, n3, function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            exec('rapper -i turtle -o rdfxml-abbrev /tmp/rapper', (err, stdout, sdterr) => {
+            if (err) {res.status(500)};
+               var data = stdout;
+               res.set('Content-Type', 'application/rdf+xml');
+               res.status(200).send(data);
+               fs.unlinkSync(tmpFile);
+            });
         });
 });
+
+
 //var bfe_post = bferouter.route('/publish');
 var prof_publish = router.route('/publish');
 
