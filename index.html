@@ -58,24 +58,17 @@
                 </button>
                 <a class="navbar-brand" href="/">BIBFRAME Editor Demo</a>
             </div>
-            <div class="collapse navbar-collapse visible-print" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav navbar-right">
-                    <li class="divider"></li>
-                    <li><a href="/login" class="btn btn-default"><span class="fa fa-user"></span>Login</a></li>
-                    <li class="divider"></li>
-                </ul>
-            </div>
         </div>
     </nav>
 
 <!-- Breadcrumbs -->
-<ol class="breadcrumb">
+<ol class="breadcrumb" id="breadcrumb" style="visibility: hidden">
 <li><a href = "/">Home</a></li>
 <li><a href = "/bfe/development.html">Editor</a></li>
 <li><a href = "/profile-edit/">Profile Editor</a></li>
 </ol>
 
-<form action="/login" method="post">
+<form id="authForm" onSubmit="return false;">
     <div>
         <label>Username:</label>
         <input type="text" name="username"/>
@@ -88,6 +81,31 @@
         <input type="submit" value="Log In"/>
     </div>
 </form>
+
+<script>
+// handle login form submission
+$("#authForm").submit(function (e) {
+  e.preventDefault();
+  $.ajax ({
+    url: "/verso/api/Users/login",
+    type: "POST",
+    data: JSON.stringify({
+      username: $("#authForm input[name=username]").val(),
+      password: $("#authForm input[name=password]").val()
+    }),
+    dataType: "json",
+    contentType: "application/json; charset=utf-8",
+    error: function() {
+      alert('Login failed');
+      $("#authForm input[type=submit]").css('color', 'red');
+    },
+    success: function() {
+      $("#breadcrumb").css('visibility', 'visible');
+      $("#authForm").css('visibility', 'hidden');
+    },
+  });
+});
+</script>
 
 <div id="bfeditor" class="container-fluid">
     <div id="iealert"></div>
@@ -105,4 +123,3 @@
    </footer>
   </body>
 </html>
-
