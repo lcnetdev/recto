@@ -62,7 +62,7 @@
             <div class="collapse navbar-collapse visible-print" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-right">
                     <li class="divider"></li>
-                    <li><a href="http://www.loc.gov/bibframe/">&laquo; Back to LC BIBFRAME Site</a></li>
+                    <li><a href="/login" class="btn btn-default"><span class="fa fa-user"></span>Login</a></li>
                     <li class="divider"></li>
                 </ul>
             </div>
@@ -74,6 +74,20 @@
 <li><a href = "/bfe/development.html">Editor</a></li>
 <li><a href = "/profile-edit/">Profile Editor</a></li>
 </ol>
+
+<form action="/login" method="post">
+    <div>
+        <label>Username:</label>
+        <input type="text" name="username"/>
+    </div>
+    <div>
+        <label>Password:</label>
+        <input type="password" name="password"/>
+    </div>
+    <div>
+        <input type="submit" value="Log In"/>
+    </div>
+</form>
 
 <div id="bfeditor" class="container-fluid">
     <div id="iealert"></div>
