@@ -7,26 +7,18 @@ const resources = "/resources/";
 const fs = require('fs');
 const _ = require('underscore');
 var proxy = require('http-proxy-middleware');
-const proxyAddr = process.env.VERSO_PROXY || 'http://mlvlp04.loc.gov:3001'
 
+const proxyAddr = process.env.VERSO_PROXY || 'http://localhost:3001'
 console.log(proxyAddr);
 
-versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso'
-//, '^/explorer': '/'
-}});
+versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 
 app.use("/verso", versoProxy);
 
-//app.get('/', function(req, res) {
-//  res.sendFile(__dirname + '/editor.html')
-//})
-
 app.use(bodyParser.urlencoded({
     extended: false,
-    limit: '250mb'    
+    limit: '250mb'
 }));
-
-app.use(bodyParser.json({limit:'250mb'}));
 
 app.use(express.static(__dirname + '/'));
 

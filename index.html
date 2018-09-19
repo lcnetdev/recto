@@ -27,8 +27,8 @@
 
     <link rel="stylesheet" href="//cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css">
 
-    <link rel="stylesheet" href="/bfe/builds/bfe.css" />
-
+    <link rel="stylesheet" href="bfe/builds/bfe.css" />
+    <base href="/bibliomata/">
     <style>
         @media screen {
             body {
@@ -63,10 +63,17 @@
 
 <!-- Breadcrumbs -->
 <ol class="breadcrumb" id="breadcrumb" style="visibility: hidden">
-<li><a href = "/">Home</a></li>
-<li><a href = "/bfe/development.html">Editor</a></li>
-<li><a href = "/profile-edit/">Profile Editor</a></li>
+<li><a href = "/bibliomata/">Home</a></li>
+<li><a href = "/bibliomata/bfe/development.html">Editor</a></li>
+<li><a href = "/bibliomata/profile-edit/">Profile Editor</a></li>
 </ol>
+
+<ul class="nav flex-column" id="menu" style="visibility: hidden">
+<li class="nav-item"><a class="nav-link" href = "bfe/development.html">Editor</a></li>
+<li class="nav-item"><a class="nav-link" href = "profile-edit/">Profile Editor</a></li>
+<li class="nav-item"><a class="nav-link" href="http://bibframe.org/bibliomata/bibframe/index-en.html">BIBFRAME ontology (local)</a></li>
+<li class="nav-item"><a class="nav-link" href="http://bibframe.org/bibliomata/mads/index-en.html">MADS ontology (local)</a></li>
+</ul>
 
 <form id="authForm" onSubmit="return false;">
     <div>
@@ -101,6 +108,7 @@ $("#authForm").submit(function (e) {
     },
     success: function() {
       $("#breadcrumb").css('visibility', 'visible');
+      $("#menu").css('visibility', 'visible');
       $("#authForm").css('visibility', 'hidden');
     },
   });
@@ -112,8 +120,6 @@ $("#authForm").submit(function (e) {
 </div>    
 
 <br/><br/><br/>
-
-<div id="csrf-token">{% csrf_token %}</div>
 
 <hr>
    <footer class="bs-footer" role="contentinfo">
