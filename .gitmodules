@@ -1,6 +1,8 @@
 [submodule "profile-edit"]
 	path = profile-edit
 	url = https://github.com/lcnetdev/profile-edit.git
+    branch = master
 [submodule "bfe"]
 	path = bfe
 	url = https://github.com/lcnetdev/bfe.git
+    branch = master
