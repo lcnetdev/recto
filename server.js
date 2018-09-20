@@ -68,19 +68,6 @@ router.use(function(req, res, next) {
     next();
 });
 
-var prof_getTemplateRefs = router.route('/getTemplateRefs')
-
-prof_getTemplateRefs.get(function(req,res,next){
-  var fs = require('fs');
-
-  file_name = __dirname + '/profile-edit/source/templateRefs/templateRefs';
-
-var readline = require('readline');
-
-var lineReader = readline.createInterface({
-    input: fs.createReadStream(file_name)
-});
-
 function parseLine(line) {
     return line;
 }
@@ -369,9 +356,6 @@ prof_checkuri.head(function(req,res){
    var uri  = req.query.uri;
    req.pipe(request.head(uri)).pipe(res);
 });
-
-var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
-//not implemented
 
 app.use('/profile-edit/server', router);
 app.use('/bfe/server', bferouter);
