@@ -68,29 +68,6 @@ router.use(function(req, res, next) {
     next();
 });
 
-function parseLine(line) {
-    return line;
-}
-
-function createRowObject(values) {
-    var rowObject = values.trim().replace('/\s\s+/', '');
-
-    return rowObject;
-}
-
-var json = {};
-json = [];
-
-lineReader.on('line', function (line) {
-   json.push(createRowObject(line));
-});
-
-lineReader.on('close', function () {
-   res.send(json);
-});
-
-});
-
 var prof_getFile = router.route('/getFile/:filename')
 
 prof_getFile.get(function(req,res){
