@@ -2,26 +2,27 @@
   "name": "recto",
   "version": "1.0.0",
   "description": "BIBFRAME Pilot User interface",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
-    "local": "VERSO_PROXY=http://localhost:3001 nodemon server.js"
+    "local": "nodemon server.js",
+    "start": "sudo pm2 start server.js --name recto"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Bibliomata/Recto.git"
+    "url": "git+https://github.com/lcnetdev/recto.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "",
   "bugs": {
-    "url": "https://github.com/Bibliomata/Recto/issues"
+    "url": "https://github.com/lcnetdev/recto/issues"
   },
-  "homepage": "https://github.com/Bibliomata/Recto#readme",
+  "homepage": "https://github.com/lcnetdev/recto#readme",
   "dependencies": {
     "body-parser": "^1.16.0",
     "eslint": "^4.19.1",
-    "express": "^4.14.1",
+    "express": "^4.16.3",
     "express-http-proxy": "^0.11.0",
     "http-proxy-middleware": "^0.17.4",
     "marklogic": "^1.0.6",
@@ -31,6 +32,7 @@
     "rdf-translator": "^0.1.0",
     "rdflib": "^0.14.0",
     "request-promise": "^4.2.2",
+    "short-uuid": "^3.0.0",
     "underscore": "^1.8.3",
     "xml": "^1.0.1"
   },
