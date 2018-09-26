@@ -7,26 +7,18 @@ const resources = "/resources/";
 const fs = require('fs');
 const _ = require('underscore');
 var proxy = require('http-proxy-middleware');
-const proxyAddr = process.env.VERSO_PROXY || 'http://localhost:3001'
 
+const proxyAddr = process.env.VERSO_PROXY || 'http://localhost:3001';
 console.log(proxyAddr);
 
-versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso'
-//, '^/explorer': '/'
-}});
+versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 
 app.use("/verso", versoProxy);
 
-//app.get('/', function(req, res) {
-//  res.sendFile(__dirname + '/editor.html')
-//})
-
 app.use(bodyParser.urlencoded({
     extended: false,
-    limit: '250mb'    
+    limit: '250mb'
 }));
-
-app.use(bodyParser.json({limit:'250mb'}));
 
 app.use(express.static(__dirname + '/'));
 
@@ -74,42 +66,6 @@ var router = express.Router();
 router.use(function(req, res, next) {
     console.log(req.method, req.url);
     next();
-});
-
-var prof_getTemplateRefs = router.route('/getTemplateRefs')
-
-prof_getTemplateRefs.get(function(req,res,next){
-  var fs = require('fs');
-
-  file_name = __dirname + '/profile-edit/source/templateRefs/templateRefs';
-
-var readline = require('readline');
-
-var lineReader = readline.createInterface({
-    input: fs.createReadStream(file_name)
-});
-
-function parseLine(line) {
-    return line;
-}
-
-function createRowObject(values) {
-    var rowObject = values.trim().replace('/\s\s+/', '');
-
-    return rowObject;
-}
-
-var json = {};
-json = [];
-
-lineReader.on('line', function (line) {
-   json.push(createRowObject(line));
-});
-
-lineReader.on('close', function () {
-   res.send(json);
-});
-
 });
 
 var prof_getFile = router.route('/getFile/:filename')
@@ -377,9 +333,6 @@ prof_checkuri.head(function(req,res){
    var uri  = req.query.uri;
    req.pipe(request.head(uri)).pipe(res);
 });
-
-var prof_updateTemplateRefs = router.route ('/updateTemplateRefs');
-//not implemented
 
 app.use('/profile-edit/server', router);
 app.use('/bfe/server', bferouter);

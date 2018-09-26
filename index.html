@@ -20,7 +20,7 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
     <script src="//code.jquery.com/jquery-migrate-1.2.1.js"></script>
     <!--<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>-->
-    <script type="text/javascript" src="/bfe/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
     <script src="//cdn.datatables.net/1.10.9/js/jquery.dataTables.js"></script>
 
     <link rel="stylesheet" href="//cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css">
@@ -55,15 +55,9 @@
                 </button>
                 <a class="navbar-brand" href="/">BIBFRAME Editor Demo</a>
             </div>
-            <div class="collapse navbar-collapse visible-print" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav navbar-right">
-                    <li class="divider"></li>
-                    <li><a href="/login" class="btn btn-default"><span class="fa fa-user"></span>Login</a></li>
-                    <li class="divider"></li>
-                </ul>
-            </div>
         </div>
     </nav>
+
 <!-- Breadcrumbs -->
 <ol class="breadcrumb">
 <li><a href="/">Home</a></li>
@@ -76,7 +70,7 @@
 <li class="nav-item"><a class="nav-link" href="http://bibframe.org/bibliomata/mads/index-en.html">MADS ontology (local)</a></li>
 </ul>
 
-<form action="/login" method="post">
+<form id="authForm" onSubmit="return false;">
     <div>
         <label>Username:</label>
         <input type="text" name="username"/>
@@ -89,6 +83,32 @@
         <input type="submit" value="Log In"/>
     </div>
 </form>
+
+<script>
+// handle login form submission
+$("#authForm").submit(function (e) {
+  e.preventDefault();
+  $.ajax ({
+    url: "/verso/api/Users/login",
+    type: "POST",
+    data: JSON.stringify({
+      username: $("#authForm input[name=username]").val(),
+      password: $("#authForm input[name=password]").val()
+    }),
+    dataType: "json",
+    contentType: "application/json; charset=utf-8",
+    error: function() {
+      alert('Login failed');
+      $("#authForm input[type=submit]").css('color', 'red');
+    },
+    success: function() {
+      $("#breadcrumb").css('visibility', 'visible');
+      $("#menu").css('visibility', 'visible');
+      $("#authForm").css('visibility', 'hidden');
+    },
+  });
+});
+</script>
 
 <div id="bfeditor" class="container-fluid">
     <div id="iealert"></div>
@@ -106,4 +126,3 @@
    </footer>
   </body>
 </html>
-
