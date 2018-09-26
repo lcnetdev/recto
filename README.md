@@ -34,6 +34,7 @@ _Recto_ includes both the BIBFRAME editor and the profile editor using git submo
 git clone --recursive https://github.com/lcnetdev/recto
 cd recto
 npm install
+git submodule init && git submodule update
 ```
 
 The bfe and profile editor submodules need to be built, as well:
@@ -41,10 +42,23 @@ The bfe and profile editor submodules need to be built, as well:
 ```
 cd bfe
 npm install
+grunt
 cd ../profile-edit/source
 npm install
 grunt
 ```
+
+The path to the profile editor may need to be updated in profile-edit/source/index.html:
+```
+<base href="/profile-edit/">
+```
+
+Similarly, the path to recto in bfe may need to be updated in the config files:
+```
+var rectoBase = "http://bibframe.org/bibliomata";
+```
+
+Finally, if using pm2 you can start recto with `npm start`, or for dev `npm run dev`
 
 ### Configuration
 
