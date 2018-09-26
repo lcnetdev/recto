@@ -5,9 +5,10 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js",
+    "dev": "node .",
     "local": "nodemon server.js",
-    "start": "sudo pm2 start server.js --name recto"
+    "start": "sudo pm2 start server.js --name recto",
+    "lint": "eslint server.js"
   },
   "repository": {
     "type": "git",
@@ -21,7 +22,6 @@
   "homepage": "https://github.com/lcnetdev/recto#readme",
   "dependencies": {
     "body-parser": "^1.16.0",
-    "eslint": "^4.19.1",
     "express": "^4.16.3",
     "express-http-proxy": "^0.11.0",
     "http-proxy-middleware": "^0.17.4",
@@ -37,6 +37,7 @@
     "xml": "^1.0.1"
   },
   "devDependencies": {
+    "eslint": "^4.19.1",
     "nodemon": "^1.11.0"
   }
 }
