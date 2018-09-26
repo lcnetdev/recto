@@ -34,7 +34,6 @@ _Recto_ includes both the BIBFRAME editor and the profile editor using git submo
 git clone --recursive https://github.com/lcnetdev/recto
 cd recto
 npm install
-git submodule init && git submodule update
 ```
 
 The bfe and profile editor submodules need to be built, as well:
