@@ -6,12 +6,6 @@ _Recto_ is a web application server for use with the Library of Congress' [BIBFR
 
 _Recto_ serves as the reference implementation of the Library of Congress' BIBFRAME cataloging environment.
 
-## Known issues
-
-* [Includes development branch of bfe](https://github.com/lcnetdev/bfe/issues/33).
-
-* Authorization handling: [bfe](https://github.com/lcnetdev/bfe/issues/36) and [profile editor](https://github.com/lcnetdev/profile-edit/issues/30).
-
 ## Getting started
 
 _Recto_ is a [Node.js](https://nodejs.org/) application designed to be built and run with [npm](https://npmjs.com).
