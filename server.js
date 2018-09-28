@@ -5,13 +5,14 @@ const bodyParser = require('body-parser');
 const profile = "/bfe/static/profiles/bibframe/";
 const resources = "/resources/";
 const fs = require('fs');
-const _ = require('underscore');
+var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
+var request = require('request');
 
 const proxyAddr = process.env.VERSO_PROXY || 'http://localhost:3001';
 console.log(proxyAddr);
 
-versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
+var versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 
 app.use("/verso", versoProxy);
 
@@ -53,7 +54,7 @@ var api_get = apirouter.route('/:id');
 api_get.get(function (req, res) {
    // First read existing users.
    fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
-        json = JSON.parse( data );
+        var json = JSON.parse( data );
         var description = _.where(json, {id: + req.params.id});
         //console.log(description);
         res.json(description);
@@ -97,13 +98,13 @@ var prof_rdfxml = router.route('/rdfxml');
 
 prof_rdfxml.post(function(req, res){
 	var rdfTranslator = require('rdf-translator');
-	var xml = require('xml');
+	//var xml = require('xml');
 	var json = JSON.stringify(req.body);
 	console.log(json);
 	rdfTranslator(json, 'json-ld', 'pretty-xml', function(err, data){
 	//  if (err) return console.error(err);
-    	//  console.log(data);
-//  	if (err) res.status(500);
+    //  console.log(data);
+    //  if (err) res.status(500);
 
 	res.set('Content-Type', 'application/rdf+xml');
 	res.status(200).send(data);
@@ -127,8 +128,8 @@ var prof_turtle2rdfxml = router.route('/n3/rdfxml');
 prof_turtle2rdfxml.post(function(req, res){
         var n3 = req.body.n3;
         var fs = require('fs');
-        var shortuuid = require('short-uuid');
-        var decimaltranslator = shortuuid("0123456789");
+        //var shortuuid = require('short-uuid');
+        //var decimaltranslator = shortuuid("0123456789");
 
         const { exec } = require('child_process');
         //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
@@ -138,8 +139,8 @@ prof_turtle2rdfxml.post(function(req, res){
             if(err) {
                 return console.log(err);
             }
-            exec('rapper -i turtle -o rdfxml-abbrev /tmp/rapper', (err, stdout, sdterr) => {
-            if (err) {res.status(500)};
+            exec('rapper -i turtle -o rdfxml-abbrev /tmp/rapper', (err, stdout, stderr) => {
+            if (err) {console.log(stderr); res.status(500);}
                var data = stdout;
                res.set('Content-Type', 'application/rdf+xml');
                res.status(200).send(data);
@@ -187,7 +188,7 @@ prof_publish_response.post(function(req,res){
    console.log(req.body);
    var shortuuid = require('short-uuid');
    var decimaltranslator = shortuuid("0123456789");
-   var request = require('request');
+   //var request = require('request');
    var rp = require('request-promise');
     
    var filename = req.body.name;
@@ -213,7 +214,7 @@ prof_publish_response.post(function(req,res){
                 };
                 if (json.publish.status === "success"){
                 rp(options).then(function (postbody) {
-                    var id = postbody.id;
+                    //var id = postbody.id;
                     delete postbody.id
                     var posturl = "http://mlvlp04.loc.gov:3000/verso/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
                     var postoptions = {
@@ -244,15 +245,15 @@ var prof_retrieveLDS = router.route('/retrieveLDS');
 
 prof_retrieveLDS.get(function(req, res) {
 
-    var shortuuid = require('short-uuid');
+    //var shortuuid = require('short-uuid');
 
-    var decimaltranslator = shortuuid("0123456789");
+    //var decimaltranslator = shortuuid("0123456789");
 
-    var request = require('request');
+    //var request = require('request');
 
     var rp = require('request-promise');
 
-    var _ = require('lodash');
+    _ = require('lodash');
 
     var instanceURL = req.query.uri;
 
@@ -321,17 +322,17 @@ prof_retrieveLDS.get(function(req, res) {
 var prof_whichrt = router.route('/whichrt');
 
 prof_whichrt.get(function(req,res){
-   var request = require('request');
-   var uri  = req.query.uri;
-   req.pipe(request(uri)).pipe(res);
+    //var request = require('request');
+    var uri  = req.query.uri;
+    req.pipe(request(uri)).pipe(res);
 });
 
 var prof_checkuri = router.route('/checkuri');
 
 prof_checkuri.head(function(req,res){
-   var request = require('request');
-   var uri  = req.query.uri;
-   req.pipe(request.head(uri)).pipe(res);
+    //var request = require('request');
+    var uri  = req.query.uri;
+    req.pipe(request.head(uri)).pipe(res);
 });
 
 app.use('/profile-edit/server', router);
@@ -348,15 +349,15 @@ passport.use(new Strategy(
 	port: '8201',
 	path: '/authenticate.xqy',
 	headers: {
-		'Authorization': 'Basic' + new Buffer(username + ':' + password).toString('base64')
+		'Authorization': 'Basic' + new Buffer.alloc(username + ':' + password).toString('base64')
 	}
     };
-	
+	var http = require('http');
     request = http.get(options, function(res){
         res.on('error', function(err) { console.log(err); });
     });
     
-    callback(cb);    
+    cb;    
 
   }));
 
