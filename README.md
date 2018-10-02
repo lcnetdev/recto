@@ -6,12 +6,6 @@ _Recto_ is a web application server for use with the Library of Congress' [BIBFR
 
 _Recto_ serves as the reference implementation of the Library of Congress' BIBFRAME cataloging environment.
 
-## Known issues
-
-* [Includes development branch of bfe](https://github.com/lcnetdev/bfe/issues/33).
-
-* Authorization handling: [bfe](https://github.com/lcnetdev/bfe/issues/36) and [profile editor](https://github.com/lcnetdev/profile-edit/issues/30).
-
 ## Getting started
 
 _Recto_ is a [Node.js](https://nodejs.org/) application designed to be built and run with [npm](https://npmjs.com).
@@ -41,10 +35,23 @@ The bfe and profile editor submodules need to be built, as well:
 ```
 cd bfe
 npm install
+grunt
 cd ../profile-edit/source
 npm install
 grunt
 ```
+
+The path to the profile editor may need to be updated in profile-edit/source/index.html:
+```
+<base href="/profile-edit/">
+```
+
+Similarly, the path to recto in bfe may need to be updated in the config files:
+```
+var rectoBase = "http://bibframe.org/bibliomata";
+```
+
+Finally, if using pm2 you can start recto with `npm start`, or for dev `npm run dev`
 
 ### Configuration
 
