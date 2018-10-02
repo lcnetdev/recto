@@ -1,0 +1,9 @@
+{
+  "extends":["eslint:recommended","plugin:node/recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2017
+  },
+  "rules":{
+    "no-console":"off",
+  }
+}
