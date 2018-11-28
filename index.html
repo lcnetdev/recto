@@ -74,6 +74,9 @@
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="Local Login">Local Login</button>
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="LDAP Login">LDAP Login</button>
 </div>
+<div id="logout-section">
+    <button type="button" class="btn btn-primary" id="up-logout">Logout</button>
+</div>
 
 <div class="modal fade" id="up-modal" tabindex="-1" role="dialog" aria-labelledby="up-title">
   <div class="modal-dialog" role="document">
@@ -104,6 +107,14 @@
 </div>
 
 <script>
+$(function () {
+  var cooks = document.cookie;
+  if (cooks.match(/access_token=/)) {
+    $("#login-buttons").css('visibility', 'hidden');
+  } else {
+    $("#logout-section").css('visibility', 'hidden');
+  }
+});
 $('#up-modal').on('show.bs.modal', function (event) {
   var button = $(event.relatedTarget);
   var type = button.data('ltype');
@@ -112,7 +123,7 @@ $('#up-modal').on('show.bs.modal', function (event) {
   var authType = (type.match(/LDAP/i)) ? 'ldap' : 'local';
   modal.find('#auth-type').val(authType);
 })
-// direct to verso login...
+
 $("#up-login").click(function (e) {
   e.preventDefault();
   var authUrl = ($("#auth-type").val() == "ldap") ? "/verso/auth/ldap" : "/verso/api/Users/login";
@@ -123,7 +134,6 @@ $("#up-login").click(function (e) {
       username: $("#username").val(),
       password: $("#password").val()
     }),
-    dataType: "json",
     contentType: "application/json; charset=utf-8",
     error: function() {
       alert('Login failed');
@@ -133,6 +143,23 @@ $("#up-login").click(function (e) {
       $("#menu").css('visibility', 'visible');
       $("#up-modal").modal('hide');
       $("#login-buttons").css('visibility', 'hidden');
+      $("#logout-section").css('visibility', 'visible');
+    },
+  });
+});
+
+$("#up-logout").click(function (e) {
+  e.preventDefault();
+  $.ajax ({
+    url: "/verso/api/Users/logout",
+    type: "POST",
+    contentType: "application/json; charset=utf-8",
+    error: function() {
+      alert('Logout failed');
+    },
+    success: function() {
+      $("#login-buttons").css('visibility', 'visible');
+      $("#logout-section").css('visibility', 'hidden');
     },
   });
 });
