@@ -70,14 +70,6 @@
 <li class="nav-item"><a class="nav-link" href="http://bibframe.org/bibliomata/mads/index-en.html">MADS ontology (local)</a></li>
 </ul>
 
-<div id="login-buttons">
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="Local Login">Local Login</button>
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="LDAP Login">LDAP Login</button>
-</div>
-<div id="logout-section">
-    <button type="button" class="btn btn-primary" id="up-logout">Logout</button>
-</div>
-
 <div class="modal fade" id="up-modal" tabindex="-1" role="dialog" aria-labelledby="up-title">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -107,62 +99,62 @@
 </div>
 
 <script>
-$(function () {
-  var cooks = document.cookie;
-  if (cooks.match(/access_token=/)) {
-    $("#login-buttons").css('visibility', 'hidden');
-  } else {
-    $("#logout-section").css('visibility', 'hidden');
-  }
-});
-$('#up-modal').on('show.bs.modal', function (event) {
-  var button = $(event.relatedTarget);
-  var type = button.data('ltype');
-  var modal = $(this);
-  modal.find('.modal-title').text(type);
-  var authType = (type.match(/LDAP/i)) ? 'ldap' : 'local';
-  modal.find('#auth-type').val(authType);
-})
-
-$("#up-login").click(function (e) {
-  e.preventDefault();
-  var authUrl = ($("#auth-type").val() == "ldap") ? "/verso/auth/ldap" : "/verso/api/Users/login";
-  $.ajax ({
-    url: authUrl,
-    type: "POST",
-    data: JSON.stringify({
-      username: $("#username").val(),
-      password: $("#password").val()
-    }),
-    contentType: "application/json; charset=utf-8",
-    error: function() {
-      alert('Login failed');
-    },
-    success: function() {
-      $("#breadcrumb").css('visibility', 'visible');
-      $("#menu").css('visibility', 'visible');
-      $("#up-modal").modal('hide');
-      $("#login-buttons").css('visibility', 'hidden');
-      $("#logout-section").css('visibility', 'visible');
-    },
+  var $login = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="Local Login">Local Login</button> \
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="LDAP Login">LDAP Login</button>';
+  var $logout = '<button type="button" class="btn btn-primary" id="up-logout">Logout</button>';
+  $('.container-fluid').append('<span id="up-buttons" class="pull-right"></span>');
+  $(function () {
+    var cooks = document.cookie;
+    if (cooks.match(/access_token=|current_user=/)) {
+      $('#up-buttons').html($logout);
+    } else {
+      $('#up-buttons').html($login);
+    }
   });
-});
+  $('#up-modal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var type = button.data('ltype');
+    var modal = $(this);
+    modal.find('.modal-title').text(type);
+    var authType = (type.match(/LDAP/i)) ? 'ldap' : 'local';
+    modal.find('#auth-type').val(authType);
+  })
 
-$("#up-logout").click(function (e) {
-  e.preventDefault();
-  $.ajax ({
-    url: "/verso/api/Users/logout",
-    type: "POST",
-    contentType: "application/json; charset=utf-8",
-    error: function() {
-      alert('Logout failed');
-    },
-    success: function() {
-      $("#login-buttons").css('visibility', 'visible');
-      $("#logout-section").css('visibility', 'hidden');
-    },
+  $(document).on("click", "#up-login", function (e) {
+    e.preventDefault();
+    var authUrl = ($("#auth-type").val() == "ldap") ? "/verso/auth/ldap" : "/verso/api/Users/login";
+    $.ajax ({
+      url: authUrl,
+      type: "POST",
+      data: JSON.stringify({
+        username: $("#username").val(),
+        password: $("#password").val()
+      }),
+      contentType: "application/json; charset=utf-8",
+      error: function() {
+        alert('Login failed');
+      },
+      success: function() {
+        $("#up-modal").modal('hide');
+        $('#up-buttons').html($logout);
+      },
+    });
   });
-});
+
+  $(document).on("click", "#up-logout", function (e) {
+    e.preventDefault();
+    $.ajax ({
+      url: "/verso/api/Users/logout",
+      type: "POST",
+      contentType: "application/json; charset=utf-8",
+      error: function() {
+        alert('Logout failed');
+      },
+      success: function() {
+        $('#up-buttons').html($login);
+      },
+    });
+  });
 </script>
 
 <div id="bfeditor" class="container-fluid">
