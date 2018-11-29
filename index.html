@@ -133,6 +133,8 @@
       contentType: "application/json; charset=utf-8",
       error: function() {
         alert('Login failed');
+        $("#username").val("");
+        $("#password").val("");
       },
       success: function() {
         $("#up-modal").modal('hide');
