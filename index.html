@@ -131,8 +131,9 @@
         password: $("#password").val()
       }),
       contentType: "application/json; charset=utf-8",
-      error: function() {
-        alert('Login failed');
+      error: function(x) {
+        alert(JSON.parse(x.responseText).error.message);
+        // alert('Login failed');
         $("#username").val("");
         $("#password").val("");
       },
