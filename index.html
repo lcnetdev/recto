@@ -137,8 +137,14 @@
         $("#password").val("");
       },
       success: function() {
-        $("#up-modal").modal('hide');
-        $('#up-buttons').html($logout);
+        if (!document.cookie.match(/access_token=|current_user=/)) {
+          alert('Login failed');
+          $("#username").val("");
+          $("#password").val("");
+        } else {
+          $("#up-modal").modal('hide');
+          $('#up-buttons').html($logout);
+        }
       },
     });
   });
