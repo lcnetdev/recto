@@ -102,7 +102,7 @@
   var $login = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="Local Login">Local Login</button> \
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#up-modal" data-ltype="LDAP Login">LDAP Login</button>';
   var $logout = '<button type="button" class="btn btn-primary" id="up-logout">Logout</button>';
-  $('.container-fluid').append('<span id="up-buttons" class="pull-right"></span>');
+  $('.container-fluid').append('<span id="up-buttons" class="pull-right" style="margin-top: 9px"></span>');
   $(function () {
     var cooks = document.cookie;
     if (cooks.match(/access_token=|current_user=/)) {
