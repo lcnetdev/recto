@@ -82,7 +82,8 @@
                         <div style="margin-top:10px" class="form-group">
                             <div class="col-sm-12 controls">
                                 <a id="login-local" href="#" class="btn btn-success">Login  </a>
-                                <a id="login-ldap" href="#" class="btn btn-primary" data-auth="ldap">Login with LDAP</a>
+                                <a id="login-ldap" href="#" class="btn btn-primary" data-auth="ldap">Login with LDAP </a>
+                                <a id="login-cancel" href="#" class="btn btn-default">Cancel </a>
                             </div>
                         </div>
                     </form>     
@@ -94,31 +95,35 @@
         var goBack = document.referrer;
         $(document).on("click", ".btn", function (e) {
             e.preventDefault();
-            var authType = $(this.id).selector;
-            var authUrl = (authType == "login-ldap") ? "/verso/auth/ldap" : "/verso/api/Users/login";
-            $.ajax ({
-                url: authUrl,
-                type: "POST",
-                data: JSON.stringify({
-                    username: $("#username").val(),
-                    password: $("#password").val()
-                }),
-                contentType: "application/json; charset=utf-8",
-                error: function(x) {
-                    alert(JSON.parse(x.responseText).error.message);
-                    $("#username").val("");
-                    $("#password").val("");
-                },
-                success: function() {
-                    if (!document.cookie.match(/access_token=|current_user=/)) {
-                        alert('Login failed');
+            if ($(this.id).selector == "login-cancel") {
+                document.location = goBack;
+            } else {
+                var authType = $(this.id).selector;
+                var authUrl = (authType == "login-ldap") ? "/verso/auth/ldap" : "/verso/api/Users/login";
+                $.ajax ({
+                    url: authUrl,
+                    type: "POST",
+                    data: JSON.stringify({
+                        username: $("#username").val(),
+                        password: $("#password").val()
+                    }),
+                    contentType: "application/json; charset=utf-8",
+                    error: function(x) {
+                        alert(JSON.parse(x.responseText).error.message);
                         $("#username").val("");
                         $("#password").val("");
-                    } else {
-                        document.location = goBack;
-                    };
-                },
-            });
+                    },
+                    success: function() {
+                        if (!document.cookie.match(/access_token=|current_user=/)) {
+                            alert('Login failed');
+                            $("#username").val("");
+                            $("#password").val("");
+                        } else {
+                            document.location = goBack;
+                        };
+                    },
+                });
+            };
         });
     </script>
     <hr>
