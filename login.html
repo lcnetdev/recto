@@ -119,6 +119,11 @@
                             $("#username").val("");
                             $("#password").val("");
                         } else {
+                            if (authType == "login-ldap") {
+                                var user = $("#username").val();
+                                var cookValue = encodeURIComponent('{"username":"' + user + '"}');
+                                document.cookie = 'current_user=' + cookValue;
+                            }
                             document.location = goBack;
                         };
                     },
