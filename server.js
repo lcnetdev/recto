@@ -135,13 +135,13 @@ prof_turtle2rdfxml.post(function(req, res){
 
         const { exec } = require('child_process');
         //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
-        var tmpFile = "/tmp/rapper";
+        var tmpFile = "/tmp/riot.ttl";
 
         fs.writeFile(tmpFile, n3, function(err) {
             if(err) {
                 return console.log(err);
             }
-            exec('rapper -i turtle -o rdfxml-abbrev /tmp/rapper', (err, stdout, stderr) => {
+            exec('/marklogic/bibliomata/jena/bin/riot --formatted=rdf/xml /tmp/riot.ttl', {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
             if (err) {console.log(stderr); res.status(500);}
                var data = stdout;
                res.set('Content-Type', 'application/rdf+xml');
@@ -150,6 +150,33 @@ prof_turtle2rdfxml.post(function(req, res){
             });
         });
 });
+
+var prof_rdfxml2jsonld = router.route('/rdfxml/jsonld');
+
+prof_rdfxml2jsonld.post(function(req, res){
+        var rdf = req.body.rdf;
+        var fs = require('fs');
+        //var shortuuid = require('short-uuid');
+        //var decimaltranslator = shortuuid("0123456789");
+
+        const { exec } = require('child_process');
+        //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
+        var tmpFile = "/tmp/riot.rdf";
+
+        fs.writeFile(tmpFile, rdf, function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            exec('/marklogic/bibliomata/jena/bin/riot --formatted=jsonld /tmp/riot.rdf', {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
+            if (err) {console.log(stderr); res.status(500);}
+               var data = stdout;
+               res.set('Content-Type', 'application/json+ld');
+               res.status(200).send(data);
+               //fs.unlinkSync(tmpFile);
+            });
+        });
+});
+
 
 
 //var bfe_post = bferouter.route('/publish');
@@ -232,12 +259,12 @@ prof_publish_response.post(function(req,res){
                         })
                         .catch(function (err) {
                             // POST failed...
-                            res.status(404).send(err);
+                            res.status(500).send(err);
                         });
                 })
                 } else {
                     console.log ("Publish error");
-                    res.status(404).send(json);
+                    res.status(500).send(json);
                 }
 //                            res.status(200).send({"name": name, "objid": objid});
 });
@@ -287,11 +314,13 @@ prof_retrieveLDS.get(function(req, res) {
 
             workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
             jsonldReturn = _.concat(instanceBody, jsonldReturn);
-            console.log("Load Work:" + workURL);
+            console.log("Load Work2:" + workURL);
             return rp({
                 uri: workURL,
                 json: true
             }).then(function(workBody) {
+                console.log("Load Instance:" + itemURL);
+                if(itemURL){
                 itemURL = itemURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
                 jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
                 return rp({
@@ -300,20 +329,31 @@ prof_retrieveLDS.get(function(req, res) {
                 }).then(function(itemBody) {
                     jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
                     res.status(200).send(jsonldReturn[0]);
+                }).catch(function (err){
+                    console.log(err);
                 });
-            });
-        } else {
-            workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
-            jsonldReturn = _.concat(instanceBody, jsonldReturn);
-            console.log("Load Work:" + workURL);
-            return rp({
-                uri: workURL,
-                json: true
-            }).then(function(workBody) {
-                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
-                res.status(200).send(jsonldReturn[0]);
+                }
+            }).catch(function (err){
+                    console.log(err);
             });
 
+        } else {
+            jsonldReturn = _.concat(instanceBody, jsonldReturn);
+            if (!_.isEmpty(workURL)){
+                workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                console.log("Load Work:" + workURL);
+                return rp({
+                    uri: workURL,
+                    json: true
+                }).then(function(workBody) {
+                    jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                    res.status(200).send(jsonldReturn[0]);
+                }).catch(function (err){
+                    console.log(err);
+                    res.status(500).send(err.message);
+                });
+            } 
+            res.status(200).send(jsonldReturn[0]);
         }
     });
 
