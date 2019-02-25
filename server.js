@@ -323,11 +323,13 @@ prof_retrieveLDS.get(function(req, res) {
                 if(itemURL){
                 itemURL = itemURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
                 jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
                 return rp({
                     uri: itemURL,
                     json: true
                 }).then(function(itemBody) {
                     jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
+                    jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
                     res.status(200).send(jsonldReturn[0]);
                 }).catch(function (err){
                     console.log(err);
@@ -347,6 +349,7 @@ prof_retrieveLDS.get(function(req, res) {
                     json: true
                 }).then(function(workBody) {
                     jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                    jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
                     res.status(200).send(jsonldReturn[0]);
                 }).catch(function (err){
                     console.log(err);
