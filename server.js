@@ -236,11 +236,13 @@ prof_publish_response.post(function(req,res){
                     json: true,
                     transform: function(body){
                         var postbody = body[0];
+                        console.log(postbody);
                         postbody.status = json.publish.status;
                         postbody.objid = json.objid;
                         return postbody;
                     }
                 };
+                console.log(json.objid + ' ' + json.publish.status);
                 if (json.publish.status === "success"){
                 rp(options).then(function (postbody) {
                     //var id = postbody.id;
