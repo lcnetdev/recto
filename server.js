@@ -1,4 +1,5 @@
 const express = require('express');
+var cors = require('cors');
 const app = express();
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -10,11 +11,14 @@ var proxy = require('http-proxy-middleware');
 var request = require('request');
 
 const proxyAddr = process.env.VERSO_PROXY || 'http://mlvlp04.loc.gov:3001';
+
 console.log(proxyAddr);
 
 var versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 
 app.use("/verso", versoProxy);
+
+app.use(cors());
 
 app.use(bodyParser.urlencoded({
     extended: false,
@@ -91,7 +95,7 @@ prof_getFile.get(function(req,res){
 
   res.on('finish', afterResponse);
 
-});
+w});
 
 //bfe routes
 var bferouter = express.Router();
@@ -106,7 +110,7 @@ prof_rdfxml.post(function(req, res){
 	rdfTranslator(json, 'json-ld', 'pretty-xml', function(err, data){
 	//  if (err) return console.error(err);
     //  console.log(data);
-    //  if (err) res.status(500);
+    if (err) res.status(500);
 
 	res.set('Content-Type', 'application/rdf+xml');
 	res.status(200).send(data);
@@ -183,13 +187,13 @@ prof_rdfxml2jsonld.post(function(req, res){
 var prof_publish = router.route('/publish');
 
 prof_publish.post(function(req,res){
-   console.log(req.body);
    var fs = require('fs');
    var objid = req.body.objid;
    var lccn = req.body.lccn;
    var dirname = __dirname + resources;
    var posted = "/marklogic/applications/natlibcat/admin/bfi/bibrecs/bfe-preprocess/valid/posted/";
    var name = req.body.name + ".rdf";
+   try{
    var rdfxml = JSON.parse(req.body.rdfxml); 
    var path = dirname + name;
    //console.log(req.params);
@@ -208,6 +212,9 @@ prof_publish.post(function(req,res){
     if (err) res.status(500);    
     res.status(200).send({"name": name, "url": resources + name, "objid": objid, "lccn": lccn});
    });
+   } catch (e) {
+    res.status(500, e.message);
+   }
 });
 
 //var bfe_publish_response = bferouter.rute('/publishRsp');
@@ -269,6 +276,44 @@ prof_publish_response.post(function(req,res){
                     res.status(500).send(json);
                 }
 //                            res.status(200).send({"name": name, "objid": objid});
+});
+
+var prof_retrieveOCLC = router.route('/retrieveOCLC');
+
+prof_retrieveOCLC.get(function(req, res) {
+    var oclcnum = req.query.oclcnum;
+    var oclckey = req.query.oclckey;
+    console.log('oclckey:' + oclckey);
+    var oclcurl = `http://www.worldcat.org/webservices/catalog/content/${oclcnum}?wskey=${oclckey}`
+    var rp = require('request-promise');
+    var fs = require('fs');
+    const { exec } = require('child_process');
+    var tmpFile = '/tmp/oclc.xml';
+    var options = {uri:oclcurl}
+    rp(options).then(function (postbody) {
+        fs.writeFile(tmpFile, postbody,
+            function(err) {
+                if (err) { return res.status(500)};
+                exec('yaz-record-conv ' + __dirname + '/configyaz.xml /tmp/oclc.xml', (err, stdout, stderr) => {
+                    if (err) {
+                        console.log(stderr);
+                        return res.status(500);
+                    }
+                    res.set('Content-Type', 'application/rdf+xml');
+                    res.status(200).send(stdout);
+                    fs.unlinkSync(tmpFile);
+                })
+            }
+        )
+    })
+    .catch(function(err){
+        console.log(err);
+        res.status(500).send();
+    })
+    .catch(function(err){
+        
+        console.error(err); // This will print any error that was thrown in the previous error handler.
+    });
 });
 
 //var bfe_retrieveLDS = bferouter.route('/retrieveLDS');
