@@ -1,5 +1,5 @@
 <backend syntax="xml">
-	<xslt stylesheet="/home/khes/marc2bibframe2/xsl/marc2bibframe2.xsl">
+	<xslt stylesheet="/marklogic/bibliomata/marc2bibframe2/xsl/marc2bibframe2.xsl">
 		<param name="idsource" value="http://id.loc.gov/vocabulary/organizations/dlc"/>
         <param name="baseuri" value="http://bibframe.example.org/"/>
         <param name="localfields" value="true"/>

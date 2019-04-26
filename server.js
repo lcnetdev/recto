@@ -10,7 +10,7 @@ var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 var request = require('request');
 
-const proxyAddr = process.env.VERSO_PROXY || 'http://mlvlp04.loc.gov:3001';
+const proxyAddr = process.env.VERSO_PROXY || 'http://localhost:3001';
 
 console.log(proxyAddr);
 
