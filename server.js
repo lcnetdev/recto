@@ -20,6 +20,13 @@ app.use("/verso", versoProxy);
 
 app.use(cors());
 
+app.use(bodyParser.json({
+    limit: '250mb',
+    verify: function (req, res, buf, encoding) {
+        req.rawBody = buf;
+    }
+}));
+
 app.use(bodyParser.urlencoded({
     extended: false,
     limit: '250mb'
@@ -36,6 +43,23 @@ app.listen(3000, function() {
   console.log('listening on 3000');
 })
 
+app.use(function(err, req, res, next) {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('%s %s %s', req.method, req.url, req.path);
+    try {
+        console.error('Bad JSON: ' + req.rawBody);
+    } catch (e) {
+        console.error('Bad JSON: ' + e.message);
+    } finally {
+        res.status(200).send();
+    }
+  } else if (err) {
+    console.log('Error: '+ err.message)
+    res.send(err.message);
+  } else {
+    next();
+  }
+});
 
 //RESTful route
 //BFE
@@ -49,22 +73,24 @@ apirouter.use(function(req, res, next) {
 var api_list = apirouter.route('/list');
 
 api_list.get(function(req,res){
-   fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
+   //fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
        //console.log( data );
-       res.json( JSON.parse(data) );
-   });
+   //    res.json( JSON.parse(data) );
+   //});
+   console.log('api/list called:' + req.url + ' ' + req.body);
 })
 
 var api_get = apirouter.route('/:id');
 
 api_get.get(function (req, res) {
    // First read existing users.
-   fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
-        var json = JSON.parse( data );
-        var description = _.where(json, {id: + req.params.id});
+   //fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
+   //     var json = JSON.parse( data );
+   //     var description = _.where(json, {id: + req.params.id});
         //console.log(description);
-        res.json(description);
-   });
+   //     res.json(description);
+   //});
+   console.log('api/:id called:' + req.url + ' ' + req.body);
 })
 
 //Profile Edit
@@ -134,23 +160,29 @@ var prof_turtle2rdfxml = router.route('/n3/rdfxml');
 prof_turtle2rdfxml.post(function(req, res){
         var n3 = req.body.n3;
         var fs = require('fs');
-        //var shortuuid = require('short-uuid');
-        //var decimaltranslator = shortuuid("0123456789");
+        var shortuuid = require('short-uuid');
+        var decimaltranslator = shortuuid("0123456789");
 
         const { exec } = require('child_process');
-        //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
-        var tmpFile = "/tmp/riot.ttl";
-
+        var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid()) + ".ttl";
+        //var tmpFile = "/tmp/riot.ttl";
         fs.writeFile(tmpFile, n3, function(err) {
             if(err) {
                 return console.log(err);
             }
-            exec('/marklogic/bibliomata/jena/bin/riot --formatted=rdf/xml /tmp/riot.ttl', {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
-            if (err) {console.log(stderr); res.status(500);}
-               var data = stdout;
-               res.set('Content-Type', 'application/rdf+xml');
-               res.status(200).send(data);
-               fs.unlinkSync(tmpFile);
+
+            exec("/marklogic/bibliomata/jena/bin/riot --formatted=rdfxml " + tmpFile , {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
+                if (err) {console.log(stderr); res.status(500);}
+                    fs.writeFileSync(tmpFile, stdout);
+                    exec("xsltproc typeNormalize.xslt " + tmpFile, (err, stdout, stderr) => {
+                        if (err) {console.log(stderr); res.status(500);}
+                        var data = stdout;
+                        res.set('Content-Type', 'application/rdf+xml');
+                        res.status(200).send(data);
+                        if (fs.existsSync(tmpFile)){
+                            fs.unlinkSync(tmpFile);
+                        }
+                });
             });
         });
 });
@@ -176,11 +208,38 @@ prof_rdfxml2jsonld.post(function(req, res){
                var data = stdout;
                res.set('Content-Type', 'application/json+ld');
                res.status(200).send(data);
-               //fs.unlinkSync(tmpFile);
+               if(fs.existsSync(tmpFile)){
+                    fs.unlinkSync(tmpFile);
+               }
             });
         });
 });
 
+var prof_rdfxml2jsonld = bferouter.route('/jsonld/rdfxml');
+
+prof_rdfxml2jsonld.post(function(req, res){
+        var jsonld = req.body.rdf;
+        var fs = require('fs');
+
+        const { exec } = require('child_process');
+        //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
+        var tmpFile = "/tmp/riot.jsonld";
+
+        fs.writeFile(tmpFile, rdf, function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            exec('/marklogic/bibliomata/jena/bin/riot --formatted=rdfxml /tmp/riot.jsonld', {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
+            if (err) {console.log(stderr); res.status(500);}
+               var data = stdout;
+               res.set('Content-Type', 'application/rdf+xml');
+               res.status(200).send(data);
+               if (fs.existsSync(tmpFile)){
+                   fs.unlinkSync(tmpFile);
+               }
+            });
+        });
+});
 
 
 //var bfe_post = bferouter.route('/publish');
@@ -198,21 +257,24 @@ prof_publish.post(function(req,res){
    var path = dirname + name;
    //console.log(req.params);
    console.log(path);
-   console.log('Got a POST request');
-
+   console.log('Publish POST: LCCN ' + lccn + ' Name: '+ name);
    if (fs.existsSync(posted+name)){
-        fs.unlinkSync(posted + name, function(err){
+        fs.unlink(posted + name, function(err){
             if (err) {
                 console.error("Error deleting " + name);
+            } else {
+                console.log("deleted " + name);
             }
        });
    }
-
+   //console.log('2')
    fs.writeFile(path, rdfxml, {encoding: 'utf8', mode: 0o777} , function (err) {
-    if (err) res.status(500);    
+    if (err) res.status(500);
+    //console.log('3')    
     res.status(200).send({"name": name, "url": resources + name, "objid": objid, "lccn": lccn});
    });
    } catch (e) {
+    console.log('Post Error:'+ e.message);
     res.status(500, e.message);
    }
 });
@@ -221,21 +283,25 @@ prof_publish.post(function(req,res){
 var prof_publish_response = router.route('/publishRsp');
 
 prof_publish_response.post(function(req,res){
-   console.log(req.body);
    var shortuuid = require('short-uuid');
    var decimaltranslator = shortuuid("0123456789");
    //var request = require('request');
    var rp = require('request-promise');
-    
+   req.setTimeout(500000);
+   if(req.body.constructor === Object && Object.keys(req.body).length === 0) {
+       throw new Error('publishRsp - req.body is empty');
+   }
+
    var filename = req.body.name;
    if (filename !== path.basename(req.body.name)) {
-        filename = path.basename(req.body.name, path.extname(req.body.name));
+       filename = path.basename(req.body.name, path.extname(req.body.name));
    }
 
    var name = "%7B%22where%22%3A%20%7B%22name%22%3A%20%22" + decimaltranslator.toUUID(filename.split(/[a-zA-Z]/)[1])+ "%22%7D%7D";
    var url = "http://localhost:3000/verso/api/bfs?filter="+name;
    console.log(url);
-   console.log('Got a POST request');
+   console.log('PublishRsp POST: filename ' + filename);
+   console.log(req.body);
 
    var json = req.body;
 
@@ -243,12 +309,13 @@ prof_publish_response.post(function(req,res){
                     json: true,
                     transform: function(body){
                         var postbody = body[0];
-                        console.log(postbody);
+                        console.log('Transformed:'+ json.objid);
                         postbody.status = json.publish.status;
                         postbody.objid = json.objid;
                         return postbody;
                     }
                 };
+                //success
                 console.log(json.objid + ' ' + json.publish.status);
                 if (json.publish.status === "success"){
                 rp(options).then(function (postbody) {
@@ -264,21 +331,22 @@ prof_publish_response.post(function(req,res){
 
                     rp(postoptions)
                         .then(function (parsedBody) {
-                            res.status(200).send(parsedBody);
+                            res.status(200).send('parsedBody');
                         })
                         .catch(function (err) {
                             // POST failed...
                             res.status(500).send(err);
-                        });
+                        })
+                   //res.status(200).send('publishRsp');
                 })
                 } else {
-                    console.log ("Publish error");
-                    res.status(500).send(json);
+                    console.log ("Publish status:" + json.publish.status + " " + json.name + " " + json.publish.message);
+                    res.status(200).send('Publish status:' + json.publish.status + " " + json.name);
                 }
-//                            res.status(200).send({"name": name, "objid": objid});
+                //res.status(200).send("publishRsp2");
 });
 
-var prof_retrieveOCLC = router.route('/retrieveOCLC');
+var prof_retrieveOCLC = bferouter.route('/retrieveOCLC');
 
 prof_retrieveOCLC.get(function(req, res) {
     var oclcnum = req.query.oclcnum;
@@ -301,7 +369,9 @@ prof_retrieveOCLC.get(function(req, res) {
                     }
                     res.set('Content-Type', 'application/rdf+xml');
                     res.status(200).send(stdout);
-                    fs.unlinkSync(tmpFile);
+                    if (fs.existsSync(tmpFile)){
+                        fs.unlinkSync(tmpFile);
+                    }
                 })
             }
         )
@@ -341,21 +411,29 @@ prof_retrieveLDS.get(function(req, res) {
     var workURL, itemURL;
     var jsonldReturn = [];
 
+    console.log("RetrieveLDS");
+
     rp(options).then(function(instanceBody) {
         //workURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:instanceOf']['@id']
 
         _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
             if (!_.isEmpty(value['bibframe:instanceOf'])) {
-                workURL = value['bibframe:instanceOf']['@id'];                    
+                workURL = value['bibframe:instanceOf']['@id'];
+                console.log("Work:" + workURL);                    
             }
         });
 
         if (_.some(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), "bibframe:hasItem")) {
             //itemURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:hasItem']['@id']
-                        
+            var itemURL;
+            var itemURLs;            
             _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
-                if (!_.isEmpty(value['bibframe:hasItem'])) {
-                    itemURL = value['bibframe:instanceOf']['@id'];
+                if (!_.isEmpty(value['bibframe:hasItem']) && _.isArray(value['bibframe:hasItem'])) {
+                    itemURLs = value['bibframe:hasItem'];
+                } else if (!_.isEmpty(value['bibframe:hasItem'])) {
+                    console.log(value['bibframe:hasItem']);
+                    itemURLs = [];
+                    itemURLs.push(value['bibframe:hasItem']);
                 }
             });
 
@@ -366,24 +444,61 @@ prof_retrieveLDS.get(function(req, res) {
                 uri: workURL,
                 json: true
             }).then(function(workBody) {
-                console.log("Load Instance:" + itemURL);
-                if(itemURL){
-                itemURL = itemURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                console.log("Work Body");
                 jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
                 jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
-                return rp({
-                    uri: itemURL,
-                    json: true
-                }).then(function(itemBody) {
-                    jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
-                    jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
-                    res.status(200).send(jsonldReturn[0]);
-                }).catch(function (err){
-                    console.log(err);
-                });
+
+                if(!_.isEmpty(itemURLs)){
+                    console.log("Load Item:" + itemURLs[0]);
+                    for(var i=0;i<itemURLs.length;i++){
+                        itemURL = itemURLs[i]["@id"].replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                        return rp({
+                            uri: itemURL,
+                            json: true
+                        }).then(function(itemBody) {
+                            jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
+                            jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
+                        }).catch(function (err){
+                            console.log(err);
+                        }).finally(function(){
+                            //if (i == itemURLs.length)
+                            //    res.status(200).send(jsonldReturn[0]);
+                            console.log("item " + i + " done");
+                        });
+                    }
+                } else {
+                    /*console.log(JSON.stringify(itemURLs));
+                    var ps = [];
+                    for (var i=0;i<itemURLs.length;i++) {
+                        console.log(i);
+                        console.log(itemURLs[i]);
+                        var itemURL = itemURLs[i]['@id'].replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                        console.log(itemURL);
+                        //jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                        //jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
+                        var itemRequest = {uri:itemURL, json: true};
+                        ps.push(rp(itemRequest));
+                    }
+
+                    Promise.all(ps)
+                        .then((itemBody) => {
+                            jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
+                            jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
+                            res.status(200).send(jsonldReturn[0]);
+                        }).catch(function (err){
+                            res.status(500).send(err.message);
+                            console.log(err);
+                        })*/
                 }
+                console.log("junk");
+                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
+                //res.status(200).send(jsonldReturn[0]);
             }).catch(function (err){
-                    console.log(err);
+                console.log(err);
+            }).finally(function() {
+                res.status(200).send(jsonldReturn[0]);
+                console.log("done");
             });
 
         } else {
