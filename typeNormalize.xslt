@@ -12,10 +12,39 @@
     
     <xsl:strip-space elements="*"/>
     <xsl:output omit-xml-declaration="yes" indent="yes"/>
+
+    <xsl:template match="bf:copyrightDate">
+        <bf:copyrightDate>
+            <xsl:attribute name="rdf:datatype">http://id.loc.gov/datatypes/edtf</xsl:attribute>
+            <xsl:value-of select="translate(.,translate(., '0123456789', ''), '')"/>
+        </bf:copyrightDate>
+    </xsl:template>
+
+    <xsl:template match="bf:date">
+        <bf:date>
+            <xsl:attribute name="rdf:datatype">http://id.loc.gov/datatypes/edtf</xsl:attribute>
+            <xsl:value-of select="translate(., '[]', '')"/>
+        </bf:date>
+    </xsl:template>
+
     <xsl:template match="@*|node()">
         <xsl:copy>
             <xsl:apply-templates select="@*|node()"/>
         </xsl:copy>
+    </xsl:template>
+
+    <xsl:template match="bf:changeDate">
+        <bf:changeDate>
+            <xsl:attribute name="rdf:datatype">http://www.w3.org/2001/XMLSchema#dateTime</xsl:attribute>
+            <xsl:apply-templates/>
+        </bf:changeDate>
+    </xsl:template>
+
+    <xsl:template match="bf:creationDate">
+        <bf:creationDate>
+            <xsl:attribute name="rdf:datatype">http://www.w3.org/2001/XMLSchema#date</xsl:attribute>
+            <xsl:apply-templates/>
+        </bf:creationDate>
     </xsl:template>
     
     <xsl:template match="bf:hasInstance/bf:Print | rdf:RDF/bf:Print">
@@ -145,8 +174,19 @@
             <xsl:apply-templates/>
         </bf:Work>
     </xsl:template>
-   
+
+    <xsl:template match="rdf:RDF/bf:Publication | bf:provisionActivity/bf:Publication">
+        <bf:ProvisionActivity>
+            <rdf:type rdf:resource='http://id.loc.gov/ontologies/bibframe/Publication'/>
+            <xsl:apply-templates/>
+        </bf:ProvisionActivity>
+    </xsl:template>
+
     <xsl:template match="rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Instance']"/>
     <xsl:template match="rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Work']"/>
+    <xsl:template match="rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Publication']"/>
+    <xsl:template match="rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Production']"/>
+    <xsl:template match="rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Manufacture']"/>
+    <xsl:template match="rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Distribution']"/>
     
 </xsl:stylesheet>
