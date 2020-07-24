@@ -10,11 +10,13 @@ var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 var request = require('request');
 
-const proxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
+const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
 
-console.log(proxyAddr);
+const bfdbhost = 'preprod-8230.id.loc.gov'
 
-var versoProxy = proxy({target: proxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
+console.log(versoProxyAddr);
+
+var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 
 app.use("/verso", versoProxy);
 
@@ -321,7 +323,7 @@ prof_publish_response.post(function(req,res){
                 rp(options).then(function (postbody) {
                     //var id = postbody.id;
                     delete postbody.id
-                    var posturl = "http://mlvlp04.loc.gov:3000/verso/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
+                    var posturl = versoProxyAddr + "/verso/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
                     var postoptions = {
                         method: 'POST',
                         uri: posturl,
@@ -437,7 +439,8 @@ prof_retrieveLDS.get(function(req, res) {
                 }
             });
 
-            workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+            workURL = workURL.replace('id.loc.gov', bfdbhost) + '.jsonld';
+            workURL = workURL.replace(/^(http:)/,"");
             jsonldReturn = _.concat(instanceBody, jsonldReturn);
             console.log("Load Work2:" + workURL);
             return rp({
@@ -451,7 +454,7 @@ prof_retrieveLDS.get(function(req, res) {
                 if(!_.isEmpty(itemURLs)){
                     console.log("Load Item:" + itemURLs[0]);
                     for(var i=0;i<itemURLs.length;i++){
-                        itemURL = itemURLs[i]["@id"].replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                        itemURL = itemURLs[i]["@id"].replace('id.loc.gov', bfdbhost) + '.jsonld';
                         return rp({
                             uri: itemURL,
                             json: true
@@ -472,7 +475,7 @@ prof_retrieveLDS.get(function(req, res) {
                     for (var i=0;i<itemURLs.length;i++) {
                         console.log(i);
                         console.log(itemURLs[i]);
-                        var itemURL = itemURLs[i]['@id'].replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                        var itemURL = itemURLs[i]['@id'].replace('id.loc.gov', bfdbhost) + '.jsonld';
                         console.log(itemURL);
                         //jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
                         //jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
@@ -504,7 +507,8 @@ prof_retrieveLDS.get(function(req, res) {
         } else {
             jsonldReturn = _.concat(instanceBody, jsonldReturn);
             if (!_.isEmpty(workURL)){
-                workURL = workURL.replace('id.loc.gov', 'mlvlp04.loc.gov:8230') + '.jsonld';
+                workURL = workURL.replace('id.loc.gov', bfdbhost) + '.jsonld';
+                workURL.replace(/^(http:)/,"");
                 console.log("Load Work:" + workURL);
                 return rp({
                     uri: workURL,
