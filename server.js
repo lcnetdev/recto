@@ -10,9 +10,14 @@ var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 var request = require('request');
 
+const appPort = process.env.APPPORT || 3000;
 const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
+const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
 
-const bfdbhost = 'preprod-8230.id.loc.gov'
+const JAVA_HOME = process.env.JAVA_HOME;
+const JENA_HOME = process.env.JENA_HOME;
+
+const postToDir = process.env.POST_TO_DIR;
 
 console.log(versoProxyAddr);
 
@@ -41,8 +46,8 @@ app.use(express.static(__dirname + '/'));
 app.use('/profile-edit', express.static(path.join(__dirname, '/profile-edit/source')));
 app.use('/bfe', express.static(path.join(__dirname, '/bfe')));
 
-app.listen(3000, function() {
-  console.log('listening on 3000');
+app.listen(appPort, function() {
+  console.log('listening on ' + appPort);
 })
 
 app.use(function(err, req, res, next) {
@@ -300,7 +305,7 @@ prof_publish_response.post(function(req,res){
    }
 
    var name = "%7B%22where%22%3A%20%7B%22name%22%3A%20%22" + decimaltranslator.toUUID(filename.split(/[a-zA-Z]/)[1])+ "%22%7D%7D";
-   var url = "http://localhost:3000/verso/api/bfs?filter="+name;
+   var url = versoProxyAddr + "/verso/api/bfs?filter="+name;
    console.log(url);
    console.log('PublishRsp POST: filename ' + filename);
    console.log(req.body);
