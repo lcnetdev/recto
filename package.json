@@ -8,6 +8,7 @@
     "dev": "node .",
     "local": "nodemon server.js",
     "start": "sudo pm2 start server.js --name recto",
+    "stop": "sudo pm2 delete recto",
     "lint": "eslint server.js"
   },
   "repository": {
