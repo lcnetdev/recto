@@ -10,23 +10,21 @@ var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 var request = require('request');
 
+const dotenv = require('dotenv');
+dotenv.config();
 const appPort = process.env.APPPORT || 3000;
 const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
 const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
-
 const JAVA_HOME = process.env.JAVA_HOME;
 const JENA_HOME = process.env.JENA_HOME;
-
 const postToDir = process.env.POST_TO_DIR;
 
 console.log(versoProxyAddr);
-
 var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
-
 app.use("/verso", versoProxy);
 
-app.use(cors());
 
+app.use(cors());
 app.use(bodyParser.json({
     limit: '250mb',
     verify: function (req, res, buf, encoding) {
