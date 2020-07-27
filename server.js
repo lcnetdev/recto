@@ -126,7 +126,7 @@ prof_getFile.get(function(req,res){
 
   res.on('finish', afterResponse);
 
-w});
+});
 
 //bfe routes
 var bferouter = express.Router();
