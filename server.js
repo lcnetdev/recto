@@ -176,7 +176,7 @@ prof_turtle2rdfxml.post(function(req, res){
                 return console.log(err);
             }
 
-            exec("/marklogic/bibliomata/jena/bin/riot --formatted=rdfxml " + tmpFile , {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
+            exec(JENA_HOME + "/bin/riot --formatted=rdfxml " + tmpFile , {env: {'JAVA_HOME': JAVA_HOME}}, (err, stdout, stderr) => {
                 if (err) {console.log(stderr); res.status(500);}
                     fs.writeFileSync(tmpFile, stdout);
                     exec("xsltproc typeNormalize.xslt " + tmpFile, (err, stdout, stderr) => {
@@ -208,7 +208,7 @@ prof_rdfxml2jsonld.post(function(req, res){
             if(err) {
                 return console.log(err);
             }
-            exec('/marklogic/bibliomata/jena/bin/riot --formatted=jsonld /tmp/riot.rdf', {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
+            exec(JENA_HOME + '/bin/riot --formatted=jsonld /tmp/riot.rdf', {env: {'JAVA_HOME': JAVA_HOME}}, (err, stdout, stderr) => {
             if (err) {console.log(stderr); res.status(500);}
                var data = stdout;
                res.set('Content-Type', 'application/json+ld');
@@ -234,7 +234,7 @@ prof_rdfxml2jsonld.post(function(req, res){
             if(err) {
                 return console.log(err);
             }
-            exec('/marklogic/bibliomata/jena/bin/riot --formatted=rdfxml /tmp/riot.jsonld', {env: {'JAVA_HOME': '/marklogic/bibliomata/jdk/jdk1.8.0_172'}}, (err, stdout, stderr) => {
+            exec(JENA_HOME + '/bin/riot --formatted=rdfxml /tmp/riot.jsonld', {env: {'JAVA_HOME': JAVA_HOME}}, (err, stdout, stderr) => {
             if (err) {console.log(stderr); res.status(500);}
                var data = stdout;
                res.set('Content-Type', 'application/rdf+xml');
