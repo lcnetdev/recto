@@ -299,7 +299,7 @@ prof_rdfxml2jsonld.post(function(req, res){
         var decimaltranslator = shortuuid("0123456789");
 
         const { exec } = require('child_process');
-        var tmpFile = TMPDIR + decimaltranslator.fromUUID(shortuuid.uuid()) + ".jsonld";
+        var tmpFile = TD + decimaltranslator.fromUUID(shortuuid.uuid()) + ".jsonld";
 
         fs.writeFile(tmpFile, rdf, function(err) {
             if(err) {
@@ -432,13 +432,13 @@ prof_retrieveOCLC.get(function(req, res) {
     var rp = require('request-promise');
     var fs = require('fs');
     const { exec } = require('child_process');
-    var tmpFile = TMPDIR + 'oclc.xml';
+    var tmpFile = TD + 'oclc.xml';
     var options = {uri:oclcurl}
     rp(options).then(function (postbody) {
         fs.writeFile(tmpFile, postbody,
             function(err) {
                 if (err) { return res.status(500)};
-                exec('yaz-record-conv ' + __dirname + '/configyaz.xml ' + TMPDIR + 'oclc.xml', (err, stdout, stderr) => {
+                exec('yaz-record-conv ' + __dirname + '/configyaz.xml ' + TD + 'oclc.xml', (err, stdout, stderr) => {
                     if (err) {
                         console.log(stderr);
                         return res.status(500);
