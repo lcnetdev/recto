@@ -10,6 +10,9 @@ var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
 var request = require('request');
 
+var $rdf = require('rdflib');
+var SaxonJS = require('saxon-js');
+
 const dotenv = require('dotenv');
 dotenv.config();
 const appPort = process.env.APPPORT || 3000;
@@ -17,7 +20,11 @@ const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
 const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
 const JAVA_HOME = process.env.JAVA_HOME;
 const JENA_HOME = process.env.JENA_HOME;
+const JENA_RIOT = process.env.JENA_RIOT;
 const postToDir = process.env.POST_TO_DIR;
+const TMPDIR = process.env.TMPDIR ||  '/tmp/'
+const TD = process.env.TD ||  '/tmp/'
+const XSLTCMD = process.env.XSLTCMD ||  'xsltproc %STYLESHEET% %SOURCE%'
 
 console.log(versoProxyAddr);
 var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
@@ -151,16 +158,31 @@ prof_rdfxml.post(function(req, res){
 
 // var bfe_turtle2rdfxml = bferouter.route('/n3/rdfxml');
 var prof_turtle2rdfxml = router.route('/n3/rdfxml');
-
-//prof_turtle2rdfxml.post(function(req, res){
-//        var rdfTranslator = require('rdf-translator');
-//        var n3 = req.body.n3;
-//        rdfTranslator(n3, 'n3', 'pretty-xml', function(err, data){
-//           //if (err) res.status(500);
-//           res.set('Content-Type', 'application/rdf+xml');
-//           res.status(200).send(data);
-//        });
-//});
+/*
+prof_turtle2rdfxml.post(function(req, res){
+        var rdfTranslator = require('rdf-translator');
+        var n3 = req.body.n3;
+        rdfTranslator(n3, 'n3', 'pretty-xml', function(err, data){
+           //if (err) res.status(500);
+           //res.set('Content-Type', 'application/rdf+xml');
+           //res.status(200).send(data);
+           console.log(data)
+            SaxonJS.transform({
+                stylesheetFileName: "typeNormalize.sef.json",
+                sourceText: data.toString(),
+                destination: "serialized"
+            }, "async")
+            .then (output => {
+                res.set('Content-Type', 'application/rdf+xml');
+                res.status(200).send(output.principalResult);
+            })
+            .catch(function (err) {
+                            // POST failed...
+                            res.status(500).send(err);
+                        });
+        });
+});
+*/
 
 prof_turtle2rdfxml.post(function(req, res){
         var n3 = req.body.n3;
@@ -169,17 +191,22 @@ prof_turtle2rdfxml.post(function(req, res){
         var decimaltranslator = shortuuid("0123456789");
 
         const { exec } = require('child_process');
-        var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid()) + ".ttl";
-        //var tmpFile = "/tmp/riot.ttl";
+        var tmpFile = TD + decimaltranslator.fromUUID(shortuuid.uuid()) + ".ttl";
+        
         fs.writeFile(tmpFile, n3, function(err) {
             if(err) {
                 return console.log(err);
             }
-
-            exec(JENA_HOME + "/bin/riot --formatted=rdfxml " + tmpFile , {env: {'JAVA_HOME': JAVA_HOME}}, (err, stdout, stderr) => {
+            
+            //console.log(JENA_RIOT + " --formatted=rdfxml " + tmpFile + " {env: {'JENA_HOME': " + JENA_HOME + ", JAVA_HOME': " + JAVA_HOME + ", 'TMPDIR': "+ TD +"}}")
+            exec(JENA_RIOT + " --formatted=rdfxml " + tmpFile , {env: {'JENA_HOME': JENA_HOME, 'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
                 if (err) {console.log(stderr); res.status(500);}
                     fs.writeFileSync(tmpFile, stdout);
-                    exec("xsltproc typeNormalize.xslt " + tmpFile, (err, stdout, stderr) => {
+                    xslcmd = XSLTCMD;
+                    xslcmd = xslcmd.replace('%STYLESHEET%', 'typeNormalize.xslt');
+                    xslcmd = xslcmd.replace('%SOURCE%', tmpFile);
+                    //console.log(xslcmd);
+                    exec(xslcmd, {env: {'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
                         if (err) {console.log(stderr); res.status(500);}
                         var data = stdout;
                         res.set('Content-Type', 'application/rdf+xml');
@@ -187,28 +214,72 @@ prof_turtle2rdfxml.post(function(req, res){
                         if (fs.existsSync(tmpFile)){
                             fs.unlinkSync(tmpFile);
                         }
-                });
+                    });
+                    /*
+                    SaxonJS.transform({
+                        stylesheetFileName: "typeNormalize.sef.json",
+                        sourceFileName: tmpFile,
+                        destination: "serialized"
+                    }, "async")
+                    .then (output => {
+                        response.writeHead(200, {'Content-Type': 'application/rdf+xml'});
+                        response.write(output.principalResult);
+                        response.end();
+                    })
+                    .catch(function (err) {
+                            // POST failed...
+                            res.status(500).send(err);
+                    });
+                    */
             });
         });
+
+    /*
+    var mimeType = 'text/n3';
+    var baseURI = "http://localhost/";
+    var store = $rdf.graph();
+    console.log(req.body);
+            $rdf.parse(n3, store, baseURI, mimeType);
+            $rdf.serialize(undefined, store, baseURI, 'application/rdf+xml', function(err, str){
+                console.log(str);
+                res.set('Content-Type', 'application/rdf+xml');
+                res.status(200).send(str);
+            });
+            
+            / *
+            SaxonJS.transform({
+                stylesheetFileName: "typeNormalize.xslt",
+                sourceText: str,
+                destination: "serialized"
+            }, "async")
+            .then (output => {
+                response.writeHead(200, {'Content-Type': 'application/rdf+xml'});
+                response.write(output.principalResult);
+                response.end();
+            })
+            .catch(function (err) {
+                            // POST failed...
+                            res.status(500).send(err);
+                        })
+                });
+            */
 });
 
 var prof_rdfxml2jsonld = router.route('/rdfxml/jsonld');
-
 prof_rdfxml2jsonld.post(function(req, res){
         var rdf = req.body.rdf;
         var fs = require('fs');
-        //var shortuuid = require('short-uuid');
-        //var decimaltranslator = shortuuid("0123456789");
+        var shortuuid = require('short-uuid');
+        var decimaltranslator = shortuuid("0123456789");
 
         const { exec } = require('child_process');
-        //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
-        var tmpFile = "/tmp/riot.rdf";
+        var tmpFile = TD + decimaltranslator.fromUUID(shortuuid.uuid()) + ".rdf";
 
         fs.writeFile(tmpFile, rdf, function(err) {
             if(err) {
                 return console.log(err);
             }
-            exec(JENA_HOME + '/bin/riot --formatted=jsonld /tmp/riot.rdf', {env: {'JAVA_HOME': JAVA_HOME}}, (err, stdout, stderr) => {
+            exec(JENA_RIOT + " --formatted=jsonld " + tmpFile , {env: {'JENA_HOME': JENA_HOME, 'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
             if (err) {console.log(stderr); res.status(500);}
                var data = stdout;
                res.set('Content-Type', 'application/json+ld');
@@ -221,20 +292,20 @@ prof_rdfxml2jsonld.post(function(req, res){
 });
 
 var prof_rdfxml2jsonld = bferouter.route('/jsonld/rdfxml');
-
 prof_rdfxml2jsonld.post(function(req, res){
         var jsonld = req.body.rdf;
         var fs = require('fs');
+        var shortuuid = require('short-uuid');
+        var decimaltranslator = shortuuid("0123456789");
 
         const { exec } = require('child_process');
-        //var tmpFile = "/tmp/" + decimaltranslator.fromUUID(shortuuid.uuid());
-        var tmpFile = "/tmp/riot.jsonld";
+        var tmpFile = TMPDIR + decimaltranslator.fromUUID(shortuuid.uuid()) + ".jsonld";
 
         fs.writeFile(tmpFile, rdf, function(err) {
             if(err) {
                 return console.log(err);
             }
-            exec(JENA_HOME + '/bin/riot --formatted=rdfxml /tmp/riot.jsonld', {env: {'JAVA_HOME': JAVA_HOME}}, (err, stdout, stderr) => {
+            exec(JENA_RIOT + " --formatted=rdfxml " + tmpFile , {env: {'JENA_HOME': JENA_HOME, 'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
             if (err) {console.log(stderr); res.status(500);}
                var data = stdout;
                res.set('Content-Type', 'application/rdf+xml');
@@ -361,13 +432,13 @@ prof_retrieveOCLC.get(function(req, res) {
     var rp = require('request-promise');
     var fs = require('fs');
     const { exec } = require('child_process');
-    var tmpFile = '/tmp/oclc.xml';
+    var tmpFile = TMPDIR + 'oclc.xml';
     var options = {uri:oclcurl}
     rp(options).then(function (postbody) {
         fs.writeFile(tmpFile, postbody,
             function(err) {
                 if (err) { return res.status(500)};
-                exec('yaz-record-conv ' + __dirname + '/configyaz.xml /tmp/oclc.xml', (err, stdout, stderr) => {
+                exec('yaz-record-conv ' + __dirname + '/configyaz.xml ' + TMPDIR + 'oclc.xml', (err, stdout, stderr) => {
                     if (err) {
                         console.log(stderr);
                         return res.status(500);
