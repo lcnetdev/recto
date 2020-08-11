@@ -4,7 +4,7 @@
   "description": "BIBFRAME Pilot User interface",
   "main": "server.js",
   "scripts": {
-    "test": "mocha --recursive test",
+    "test": "mocha --recursive --exit test",
     "dev": "node .",
     "local": "nodemon server.js",
     "start": "sudo pm2 start server.js --name recto",
