@@ -30,7 +30,6 @@ console.log(versoProxyAddr);
 var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 app.use("/verso", versoProxy);
 
-
 app.use(cors());
 app.use(bodyParser.json({
     limit: '250mb',
@@ -89,7 +88,10 @@ api_list.get(function(req,res){
        //console.log( data );
    //    res.json( JSON.parse(data) );
    //});
-   console.log('api/list called:' + req.url + ' ' + req.body);
+    console.log('api/list called:' + req.url + ' ' + req.body);
+    data = "Found"
+    res.set('Content-Type', 'text/html');
+    res.status(200).send(data);
 })
 
 var api_get = apirouter.route('/:id');
@@ -107,7 +109,6 @@ api_get.get(function (req, res) {
 
 //Profile Edit
 var router = express.Router();
-
 router.use(function(req, res, next) {
     console.log(req.method, req.url);
     next();
@@ -651,3 +652,8 @@ app.post('/login',
                                    failureRedirect: '/login',
                                    failureFlash: false })
 );
+
+module.exports = bferouter;
+module.exports = router;
+module.exports = apirouter;
+module.exports = app;
