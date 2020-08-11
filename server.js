@@ -82,17 +82,17 @@ apirouter.use(function(req, res, next) {
 });
 
 var api_list = apirouter.route('/list');
-
+console.log(api_list);
 api_list.get(function(req,res){
    //fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
        //console.log( data );
    //    res.json( JSON.parse(data) );
    //});
     console.log('api/list called:' + req.url + ' ' + req.body);
-    data = "Found"
+    data = "Found";
     res.set('Content-Type', 'text/html');
     res.status(200).send(data);
-})
+});
 
 var api_get = apirouter.route('/:id');
 
@@ -105,7 +105,7 @@ api_get.get(function (req, res) {
    //     res.json(description);
    //});
    console.log('api/:id called:' + req.url + ' ' + req.body);
-})
+});
 
 //Profile Edit
 var router = express.Router();
@@ -302,18 +302,26 @@ prof_rdfxml2jsonld.post(function(req, res){
         const { exec } = require('child_process');
         var tmpFile = TD + decimaltranslator.fromUUID(shortuuid.uuid()) + ".jsonld";
 
-        fs.writeFile(tmpFile, rdf, function(err) {
+        fs.writeFile(tmpFile, jsonld, function(err) {
             if(err) {
                 return console.log(err);
             }
             exec(JENA_RIOT + " --formatted=rdfxml " + tmpFile , {env: {'JENA_HOME': JENA_HOME, 'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
-            if (err) {console.log(stderr); res.status(500);}
-               var data = stdout;
-               res.set('Content-Type', 'application/rdf+xml');
-               res.status(200).send(data);
-               if (fs.existsSync(tmpFile)){
-                   fs.unlinkSync(tmpFile);
-               }
+                if (err) {console.log(stderr); res.status(500);}
+                    fs.writeFileSync(tmpFile, stdout);
+                    xslcmd = XSLTCMD;
+                    xslcmd = xslcmd.replace('%STYLESHEET%', 'typeNormalize.xslt');
+                    xslcmd = xslcmd.replace('%SOURCE%', tmpFile);
+                    //console.log(xslcmd);
+                    exec(xslcmd, {env: {'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
+                        if (err) {console.log(stderr); res.status(500);}
+                        var data = stdout;
+                        res.set('Content-Type', 'application/rdf+xml');
+                        res.status(200).send(data);
+                        if (fs.existsSync(tmpFile)){
+                            fs.unlinkSync(tmpFile);
+                        }
+                    });
             });
         });
 });
@@ -621,10 +629,6 @@ prof_checkuri.head(function(req,res){
     req.pipe(request.head(uri)).pipe(res);
 });
 
-app.use('/profile-edit/server', router);
-app.use('/bfe/server', bferouter);
-app.use('/api', apirouter);
-
 var passport = require('passport');
 var Strategy = require('passport-http').BasicStrategy;
 
@@ -652,6 +656,11 @@ app.post('/login',
                                    failureRedirect: '/login',
                                    failureFlash: false })
 );
+
+
+app.use('/profile-edit/server', router);
+app.use('/bfe/server', bferouter);
+app.use('/api', apirouter);
 
 module.exports = bferouter;
 module.exports = router;
