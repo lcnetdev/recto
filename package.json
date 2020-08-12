@@ -39,6 +39,7 @@
     "request-promise": "^4.2.2",
     "saxon-js": "^2.0.2",
     "short-uuid": "^3.0.0",
+    "supertest": "^4.0.2",
     "underscore": "^1.8.3",
     "xml": "^1.0.1"
   },

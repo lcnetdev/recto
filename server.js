@@ -4,7 +4,8 @@ const app = express();
 const path = require('path');
 const bodyParser = require('body-parser');
 const profile = "/bfe/static/profiles/bibframe/";
-const resources = "/resources/";
+//const resources = "/resources/";
+const resources = "/data/";
 const fs = require('fs');
 var _ = require('underscore');
 var proxy = require('http-proxy-middleware');
@@ -31,6 +32,13 @@ var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/vers
 app.use("/verso", versoProxy);
 
 app.use(cors());
+app.use(bodyParser.json({
+    limit: '250mb',
+    verify: function (req, res, buf, encoding) {
+        req.rawBody = buf;
+    }
+}));
+
 app.use(bodyParser.json({
     limit: '250mb',
     verify: function (req, res, buf, encoding) {
@@ -114,7 +122,7 @@ router.use(function(req, res, next) {
     next();
 });
 
-var prof_getFile = router.route('/getFile/:filename')
+var prof_getFile = router.route('/getFile/:filename');
 
 prof_getFile.get(function(req,res){
   function afterResponse (){
@@ -193,12 +201,12 @@ prof_turtle2rdfxml.post(function(req, res){
 
         const { exec } = require('child_process');
         var tmpFile = TD + decimaltranslator.fromUUID(shortuuid.uuid()) + ".ttl";
-        
+
         fs.writeFile(tmpFile, n3, function(err) {
             if(err) {
                 return console.log(err);
             }
-            
+
             //console.log(JENA_RIOT + " --formatted=rdfxml " + tmpFile + " {env: {'JENA_HOME': " + JENA_HOME + ", JAVA_HOME': " + JAVA_HOME + ", 'TMPDIR': "+ TD +"}}")
             exec(JENA_RIOT + " --formatted=rdfxml " + tmpFile , {env: {'JENA_HOME': JENA_HOME, 'JAVA_HOME': JAVA_HOME, 'TMPDIR': TD}}, (err, stdout, stderr) => {
                 if (err) {console.log(stderr); res.status(500);}
@@ -331,37 +339,123 @@ prof_rdfxml2jsonld.post(function(req, res){
 var prof_publish = router.route('/publish');
 
 prof_publish.post(function(req,res){
-   var fs = require('fs');
-   var objid = req.body.objid;
-   var lccn = req.body.lccn;
-   var dirname = __dirname + resources;
-   var posted = "/marklogic/applications/natlibcat/admin/bfi/bibrecs/bfe-preprocess/valid/posted/";
-   var name = req.body.name + ".rdf";
-   try{
-   var rdfxml = JSON.parse(req.body.rdfxml); 
-   var path = dirname + name;
-   //console.log(req.params);
-   console.log(path);
-   console.log('Publish POST: LCCN ' + lccn + ' Name: '+ name);
-   if (fs.existsSync(posted+name)){
-        fs.unlink(posted + name, function(err){
-            if (err) {
-                console.error("Error deleting " + name);
+    //var fs = require('fs');
+    var shortuuid = require('short-uuid');
+    var decimaltranslator = shortuuid("0123456789");
+    var objid = req.body.objid;
+    var lccn = req.body.lccn;
+    var dirname = __dirname + resources;
+    var posted = "/marklogic/applications/natlibcat/admin/bfi/bibrecs/bfe-preprocess/valid/posted/";
+    var name = req.body.name + ".rdf";
+    var exec = require('child_process');
+    
+    var MLCPPATH="/marklogic/id/id-prep/mlcp/bin";
+    var PASSWD="/marklogic/id/id-prep/marc/keys/passwd-ml.sh";
+
+    var grepWithSyncShell = function (file, query) {
+        try {
+            var stdout = exec.execSync('grep -E ' +  query + ' ' + file);
+            if (stdout.toString().length!==0) {
+                return query;
             } else {
-                console.log("deleted " + name);
+                return
             }
-       });
-   }
-   //console.log('2')
-   fs.writeFile(path, rdfxml, {encoding: 'utf8', mode: 0o777} , function (err) {
-    if (err) res.status(500);
-    //console.log('3')    
-    res.status(200).send({"name": name, "url": resources + name, "objid": objid, "lccn": lccn});
-   });
-   } catch (e) {
-    console.log('Post Error:'+ e.message);
-    res.status(500, e.message);
-   }
+        } catch (e) {
+            return e.stderr.toString();
+        }
+    }
+
+    var rapperWithShell = function (file, done) {
+        console.log("file:" + file);
+        exec.exec('rapper -i rdfxml -o ntriples -c ' + file, done);
+    }
+
+    try{
+        var rdfxml = JSON.parse(req.body.rdfxml); 
+        var rdfpath = dirname + name;
+        //console.log(req.params);
+        console.log(rdfpath);
+        console.log('Publish POST: LCCN ' + lccn + ' Name: '+ name);
+        if (fs.existsSync(posted+name)){
+            fs.unlink(posted + name, function(err){
+                if (err) {
+                    console.error("Error deleting " + name);
+                } else {
+                    console.log("deleted " + name);
+                }
+            });
+        }
+        //console.log('2')
+        fs.writeFile(rdfpath, rdfxml, {encoding: 'utf8', mode: 0o777} , function (err) {
+            if (err) res.status(500);
+            //console.log('3')    
+            console.log(rdfpath);
+            rapperWithShell(rdfpath, function (err, stdout, stderr) {
+                var errmsg;
+                //rapper
+                var zero="0 triples"
+                var warning="rapper: Warning"
+                var normalForm = "Unicode Normal Form C"
+                var error="rapper: Error"
+
+                //find in file
+                var vocab1="bibframe.org/vocab"
+                var rdfdesc="rdf:Description"
+
+                if (err) {          
+                    if (stderr.match(zero)) {
+                        errmsg = zero;
+                    } else if (stderr.match(warning)) {
+                        errmsg = warning;
+                    } else if (stderr.match(normalForm)) {
+                        errmsg = normalForm;
+                    } else if (stderr.match(error)) {
+                        errmsg = error;
+                    } 
+                } 
+        
+                errmsg = grepWithSyncShell(rdfpath, vocab1);
+                errmsg = grepWithSyncShell(rdfpath, rdfdesc);
+        
+                if (errmsg) {
+                    console.log("Error msg:" + errmsg)
+                    var errorres={"name": req.body.name, "objid": objid, "publish": {"status": "error","message": errmsg }};
+                    res.status(200).send(errorres);
+                } else {
+                    console.log("loading files from bfe");
+                    exec.exec(PASSWD, function (err, stdout, stderr) {
+                        if (err) res.status(500);
+                        var password = stdout;
+                        var mlcp=MLCPPATH + "/mlcp.sh import \
+                        -host mlvlp04.loc.gov \
+                        -port 8203 \
+                        -username id-admin \
+                        -password "+ password + " \
+                        -input_file_path " + dirname + " \
+                        -input_file_pattern '"+ name + "' \
+                        -output_uri_replace \"" + dirname + ",''\"  \
+                        -output_permissions lc_read,read,lc_read,execute,id-admin-role,update,lc_xmlsh,update \
+                        -input_file_type documents \
+                        -document_type XML \
+                        -transform_module /admin/bfi/bibrecs/modules/bfe2mets.xqy \
+                        -transform_function transform \
+                        -transform_namespace http://loc.gov/ndmso/bfe-2-mets \
+                        -thread_count 4 "; console.log(mlcp.replace(/[\s|\n]+/g," "))
+                        exec.exec(mlcp.replace(/[\s|\n]+/g," "), function(err, stdout, stderr){
+                            if (err) {
+                                console.log("Error msg:" + stderr)
+                                res.status(200).send({"name": req.body.name, "objid": objid, "publish": {"status": "error","message": errmsg }});
+                            }                   
+                            res.status(200).send({"name": req.body.name, "url": resources + name, "objid": objid, "lccn": lccn, "publish": {"status":"published"}});
+                        });
+                    });
+                }
+            });
+        });
+    } catch (e) {
+        console.log('Post Error:'+ e.message);
+        res.status(500, e.message);
+    }
 });
 
 //var bfe_publish_response = bferouter.rute('/publishRsp');
@@ -377,10 +471,11 @@ prof_publish_response.post(function(req,res){
        throw new Error('publishRsp - req.body is empty');
    }
 
-   var filename = req.body.name;
-   if (filename !== path.basename(req.body.name)) {
-       filename = path.basename(req.body.name, path.extname(req.body.name));
-   }
+   var filename = path.basename(req.body.name, ".rdf");
+   //if (filename !== path.basename(req.body.name)) {
+   //    console.log("basename");
+   //    filename = path.basename(req.body.name, path.extname(req.body.name));
+   //}
 
    var name = "%7B%22where%22%3A%20%7B%22name%22%3A%20%22" + decimaltranslator.toUUID(filename.split(/[a-zA-Z]/)[1])+ "%22%7D%7D";
    var url = versoProxyAddr + "/verso/api/bfs?filter="+name;
@@ -508,9 +603,14 @@ prof_retrieveLDS.get(function(req, res) {
             }
         });
 
-        if (_.some(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), "bibframe:hasItem")) {
+        if (options.uri.match(/editor-pkg/)){
+            workURL = null;
+            console.log("Editor Package Mode");
+        }
+
+        if (!options.uri.match(/editor-pkg/) && _.some(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), "bibframe:hasItem")) {
             //itemURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:hasItem']['@id']
-            var itemURL;
+            /*var itemURL;
             var itemURLs;            
             _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
                 if (!_.isEmpty(value['bibframe:hasItem']) && _.isArray(value['bibframe:hasItem'])) {
@@ -520,7 +620,7 @@ prof_retrieveLDS.get(function(req, res) {
                     itemURLs = [];
                     itemURLs.push(value['bibframe:hasItem']);
                 }
-            });
+            });*/
 
             workURL = workURL.replace('id.loc.gov', bfdbhost) + '.jsonld';
             workURL = workURL.replace(/^(http:)/,"");
