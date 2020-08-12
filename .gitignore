@@ -1,5 +1,6 @@
-#data
+# data
 resources/
+data/*.rdf
 
 # Logs
 logs
