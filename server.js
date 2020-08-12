@@ -729,7 +729,7 @@ var prof_whichrt = router.route('/whichrt');
 prof_whichrt.get(function(req,res){
     //var request = require('request');
     var uri  = req.query.uri;
-    if ( !uri.startsWith("http") && uri.startsWith('/') {
+    if ( !uri.startsWith("http") && uri.startsWith('/') ) {
         uri = versoProxyAddr + uri
     };
     req.pipe(request(uri)).pipe(res);
