@@ -26,6 +26,7 @@ const postToDir = process.env.POST_TO_DIR;
 const TMPDIR = process.env.TMPDIR ||  '/tmp/'
 const TD = process.env.TD ||  '/tmp/'
 const XSLTCMD = process.env.XSLTCMD ||  'xsltproc %STYLESHEET% %SOURCE%'
+const RAPPERCMD = process.env.RAPPER_EXEC ||  'rapper'
 const MLCPCMD = process.env.MLCP_EXEC ||  'mlclp.sh'
 
 const MLHOST = process.env.MLHOST
@@ -375,7 +376,7 @@ prof_publish.post(function(req,res){
 
     var rapperWithShell = function (file, done) {
         console.log("file:" + file);
-        exec.exec('rapper -i rdfxml -o ntriples -c ' + file, done);
+        exec.exec(RAPPERCMD + ' -i rdfxml -o ntriples -c ' + file, done);
     }
 
     try{
@@ -445,8 +446,8 @@ prof_publish.post(function(req,res){
                         -output_permissions lc_read,read,lc_read,execute,id-admin-role,update,lc_xmlsh,update \
                         -input_file_type documents \
                         -document_type XML \
-                        -database " + MLDB + " \
-                        -modules " + MLMODULESDB + " \
+                        -database '" + MLDB + "' \
+                        -modules '" + MLMODULESDB + "' \
                         -transform_module /admin/bfi/bibrecs/modules/bfe2mets.xqy \
                         -transform_function transform \
                         -transform_namespace http://loc.gov/ndmso/bfe-2-mets \
