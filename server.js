@@ -7,7 +7,7 @@ const profile = "/bfe/static/profiles/bibframe/";
 const resources = "/resources/";
 const fs = require('fs');
 var _ = require('underscore');
-var proxy = require('http-proxy-middleware');
+const {createProxyMiddleware} = require('http-proxy-middleware');
 var request = require('request');
 
 var $rdf = require('rdflib');
@@ -27,7 +27,7 @@ const TD = process.env.TD ||  '/tmp/'
 const XSLTCMD = process.env.XSLTCMD ||  'xsltproc %STYLESHEET% %SOURCE%'
 
 console.log(versoProxyAddr);
-var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
+var versoProxy = createProxyMiddleware({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
 app.use("/verso", versoProxy);
 
 app.use(cors());
