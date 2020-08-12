@@ -26,6 +26,14 @@ const postToDir = process.env.POST_TO_DIR;
 const TMPDIR = process.env.TMPDIR ||  '/tmp/'
 const TD = process.env.TD ||  '/tmp/'
 const XSLTCMD = process.env.XSLTCMD ||  'xsltproc %STYLESHEET% %SOURCE%'
+const MLCPCMD = process.env.MLCP_EXEC ||  'mlclp.sh'
+
+const MLHOST = process.env.MLHOST
+const MLPORT = process.env.MLPORT;
+const MLUSER = process.env.MLUSER;
+const MLPASS = process.env.MLPASS;
+const MLDB = process.env.MLDB;
+const MLMODULESDB = process.env.MLMODULESDB;
 
 console.log(versoProxyAddr);
 var versoProxy = proxy({target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
@@ -426,17 +434,19 @@ prof_publish.post(function(req,res){
                     exec.exec(PASSWD, function (err, stdout, stderr) {
                         if (err) res.status(500);
                         var password = stdout;
-                        var mlcp=MLCPPATH + "/mlcp.sh import \
-                        -host mlvlp04.loc.gov \
-                        -port 8203 \
-                        -username id-admin \
-                        -password "+ password + " \
+                        var mlcp=MLCPCMD + " import \
+                        -host " + MLHOST + " \
+                        -port " + MLPORT + " \
+                        -username " + MLUSER + " \
+                        -password " + MLPASS + " \
                         -input_file_path " + dirname + " \
                         -input_file_pattern '"+ name + "' \
                         -output_uri_replace \"" + dirname + ",''\"  \
                         -output_permissions lc_read,read,lc_read,execute,id-admin-role,update,lc_xmlsh,update \
                         -input_file_type documents \
                         -document_type XML \
+                        -database " + MLDB + " \
+                        -modules " + MLMODULESDB + " \
                         -transform_module /admin/bfi/bibrecs/modules/bfe2mets.xqy \
                         -transform_function transform \
                         -transform_namespace http://loc.gov/ndmso/bfe-2-mets \
