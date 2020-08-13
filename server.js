@@ -448,7 +448,7 @@ prof_publish.post(function(req,res){
                         -document_type XML \
                         -database '" + MLDB + "' \
                         -modules '" + MLMODULESDB + "' \
-                        -transform_module /admin/bfi/bibrecs/modules/bfe2mets.xqy \
+                        -transform_module /modules/bfe2mets.xqy \
                         -transform_function transform \
                         -transform_namespace http://loc.gov/ndmso/bfe-2-mets \
                         -thread_count 4 "; console.log(mlcp.replace(/[\s|\n]+/g," "))
