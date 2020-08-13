@@ -443,7 +443,7 @@ prof_publish.post(function(req,res){
                         -input_file_path " + dirname + " \
                         -input_file_pattern '"+ name + "' \
                         -output_uri_replace \"" + dirname + ",''\"  \
-                        -output_permissions lc_read,read,lc_read,execute,id-admin-role,update,lc_xmlsh,update \
+                        -output_permissions id-user-role,read,id-user-role,execute,id-admin-role,update \
                         -input_file_type documents \
                         -document_type XML \
                         -database '" + MLDB + "' \
