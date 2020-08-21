@@ -9,6 +9,8 @@
     "local": "nodemon server.js",
     "start": "sudo pm2 start server.js --name recto",
     "stop": "sudo pm2 delete recto",
+    "startstaging": "sudo pm2 start server.js --name rectostaging",
+    "stopstaging": "sudo pm2 delete rectostaging",
     "lint": "eslint server.js"
   },
   "repository": {
