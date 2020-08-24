@@ -37,7 +37,19 @@ const MLDB = process.env.MLDB;
 const MLMODULESDB = process.env.MLMODULESDB;
 
 console.log(versoProxyAddr);
-var versoProxy = createProxyMiddleware({changeOrigin: true, secure: false, target: versoProxyAddr, pathRewrite: {'^/verso' : '/verso', '^/verso/explorer': '/explorer'}});
+proxyObj = { 
+    changeOrigin: true, 
+    secure: false, 
+    target: versoProxyAddr, 
+    pathRewrite: {
+        '^/verso' : '/verso', 
+        '^/verso/explorer': '/explorer'
+    },
+    headers: {
+        "Cache-Control": "no-cache"
+    }
+};
+var versoProxy = createProxyMiddleware(proxyObj);
 app.use("/verso", versoProxy);
 
 app.use(cors());
