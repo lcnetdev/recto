@@ -49,11 +49,13 @@ proxyObj = {
         "Cache-Control": "no-cache"
     },
     onProxyReq: function(proxyReq, req, res) {
-     // Add custom headers
-     proxyReq.setHeader('Cache-Control', 'no-cache');
+        proxyReq.setHeader('Cache-Control', 'no-cache');
+    },
+    onProxyReqWs: function(proxyReq, req, res) {
+        proxyReq.setHeader('Cache-Control', 'no-cache');
     },
     onProxyRes: function(proxyRes, req, res) {
-        proxyRes.headers['Cache-Control'] = 'no-cache'; // add new header to response
+        proxyRes.headers['Cache-Control'] = 'no-cache';
     }
 };
 var versoProxy = createProxyMiddleware(proxyObj);
