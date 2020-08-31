@@ -122,27 +122,69 @@ apirouter.use(function(req, res, next) {
 var api_list = apirouter.route('/list');
 console.log(api_list);
 api_list.get(function(req,res){
-   //fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
-       //console.log( data );
-   //    res.json( JSON.parse(data) );
-   //});
-    console.log('api/list called:' + req.url + ' ' + req.body);
-    data = "Found";
-    res.set('Content-Type', 'text/html');
-    res.status(200).send(data);
+    var d = new Date();
+    d.setDate(d.getDate()-30);
+    oneMonthAgo = d.toISOString();
+
+    var url = versoProxyAddr + "/verso/api/bfs?filter[where][modified][gt]=" + oneMonthAgo;
+    var options = {
+        method: 'GET',
+        uri: url,
+        json: true // Takes JSON as string and converts to Object
+    };
+    var dataattributes = require('./lib/dataattributes');
+    //t = {"@id":"_:bnodekRpvFF2w3dB2VDka81QdpM","@type":["http://id.loc.gov/ontologies/bibframe/Title"],"http://id.loc.gov/ontologies/bibframe/mainTitle":[{"@value":"The heir affair"}]}
+    //d.title = dataattributes.findTitle(t);
+    
+    //c = {"@id":"_:bnode7arSs3ZKW7qSKpbY2cVKWh","http://id.loc.gov/ontologies/bibframe/agent":[{"@id":"http://id.loc.gov/authorities/names/n2007046505"}],"http://id.loc.gov/ontologies/bibframe/role":[{"@id":"_:bnodevJ248hJW9Qkz1mca9XM5YF"}],"@type":["http://id.loc.gov/ontologies/bflc/PrimaryContribution"]},{"@id":"http://id.loc.gov/authorities/names/n2007046505","@type":["http://id.loc.gov/ontologies/bibframe/Person"],"http://www.w3.org/2000/01/rdf-schema#label":[{"@value":"Cocks, Heather"}]},{"@id":"_:bnodevJ248hJW9Qkz1mca9XM5YF","http://www.w3.org/2000/01/rdf-schema#label":[{"@value":"author"}],"@type":["http://id.loc.gov/ontologies/bibframe/Role"]};
+    //console.log(dataattributes.findContribution(c));
+    var rp = require('request-promise');
+    rp(options)
+        .then(function (data) {
+            // res.status(200).send(data);
+            /*
+                kefo - note - 2020 08 31
+                Asking for the last 60 days of resources takes the same 
+                amount of time to fetch *locally* when passing the response 
+                through or winnowing it down to only that which the application 
+                needs.  HOWEVER, 60 days worth of data is 20MB versus less than 
+                500Kb of winnowed data.
+            */
+            data.forEach(function(d){
+                d.title = dataattributes.findTitle(d.rdf);
+                d.lccn = dataattributes.findLccn(d.rdf);
+                d.contribution = dataattributes.findContribution(d.rdf);
+                d.catalogerid = dataattributes.findCatalogerId(d.rdf);
+                delete d.rdf;
+            });
+            res.set('Content-Type', 'application/json');
+            res.status(200).send(data);
+        })
+        .catch(function (err) {
+            // POST failed...
+            res.status(500).send(err);
+        });
 });
 
-var api_get = apirouter.route('/:id');
+var api_get = apirouter.route('/getStoredJSONLD/:id');
 
 api_get.get(function (req, res) {
-   // First read existing users.
-   //fs.readFile( __dirname + "/" + "descriptions.json", 'utf8', function (err, data) {
-   //     var json = JSON.parse( data );
-   //     var description = _.where(json, {id: + req.params.id});
-        //console.log(description);
-   //     res.json(description);
-   //});
-   console.log('api/:id called:' + req.url + ' ' + req.body);
+    var url = versoProxyAddr + "/verso/api/bfs/" + req.params.id;
+    var options = {
+        method: 'GET',
+        uri: url,
+        json: true // Takes JSON as string and converts to Object
+    };
+    var rp = require('request-promise');
+    rp(options)
+        .then(function (data) {
+            res.set('Content-Type', 'application/json');
+            res.status(200).send(data.rdf);
+        })
+        .catch(function (err) {
+            // POST failed...
+            res.status(500).send(err);
+        });
 });
 
 //Profile Edit
