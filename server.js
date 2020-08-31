@@ -120,13 +120,17 @@ apirouter.use(function(req, res, next) {
 });
 
 var api_list = apirouter.route('/list');
-console.log(api_list);
 api_list.get(function(req,res){
+    var daysAgo = req.query.daysago;
     var d = new Date();
-    d.setDate(d.getDate()-30);
-    oneMonthAgo = d.toISOString();
-
-    var url = versoProxyAddr + "/verso/api/bfs?filter[where][modified][gt]=" + oneMonthAgo;
+    d.setDate(d.getDate()-15);
+    if (daysAgo !== undefined) {
+        d = new Date();
+        d.setDate(d.getDate()-parseInt(daysAgo));    
+    }
+    since = d.toISOString();
+    
+    var url = versoProxyAddr + "/verso/api/bfs?filter[where][modified][gt]=" + since;
     var options = {
         method: 'GET',
         uri: url,
