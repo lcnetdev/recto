@@ -27,14 +27,9 @@ const TMPDIR = process.env.TMPDIR ||  '/tmp/'
 const TD = process.env.TD ||  '/tmp/'
 const XSLTCMD = process.env.XSLTCMD ||  'xsltproc %STYLESHEET% %SOURCE%'
 const RAPPERCMD = process.env.RAPPER_EXEC ||  'rapper'
-const MLCPCMD = process.env.MLCP_EXEC ||  'mlclp.sh'
 
-const MLHOST = process.env.MLHOST
-const MLPORT = process.env.MLPORT;
 const MLUSER = process.env.MLUSER;
 const MLPASS = process.env.MLPASS;
-const MLDB = process.env.MLDB;
-const MLMODULESDB = process.env.MLMODULESDB;
 
 console.log(versoProxyAddr);
 proxyObj = { 
@@ -428,6 +423,10 @@ prof_publish.post(function(req,res){
         uri: url,
         body: rdfxml,
         headers: { "Content-type": "application/xml" },
+        auth: {
+                'user': MLUSER,
+                'pass': MLPASS,
+            },
         json: false // Takes JSON as string and converts to Object
     };
     var rp = require('request-promise');
@@ -461,6 +460,7 @@ prof_publish.post(function(req,res){
         })
         .catch(function (err) {
             // POST failed...
+            console.log(err)
             resp_data = {
                     "name": req.body.name, 
                     "objid":  objid, 
