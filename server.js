@@ -411,9 +411,7 @@ prof_rdfxml2jsonld.post(function(req, res){
 });
 
 
-//var bfe_post = bferouter.route('/publish');
 var prof_publish = router.route('/publish');
-
 prof_publish.post(function(req,res){
     //var fs = require('fs');
     var shortuuid = require('short-uuid');
@@ -421,124 +419,60 @@ prof_publish.post(function(req,res){
     var objid = req.body.objid;
     var lccn = req.body.lccn;
     var dirname = __dirname + resources;
-    var posted = "/marklogic/applications/natlibcat/admin/bfi/bibrecs/bfe-preprocess/valid/posted/";
     var name = req.body.name + ".rdf";
-    var exec = require('child_process');
+    var rdfxml = JSON.parse(req.body.rdfxml); 
     
-    var MLCPPATH="/marklogic/id/id-prep/mlcp/bin";
-    var PASSWD="/marklogic/id/id-prep/marc/keys/passwd-ml.sh";
-
-    var grepWithSyncShell = function (file, query) {
-        try {
-            var stdout = exec.execSync('grep -E ' +  query + ' ' + file);
-            if (stdout.toString().length!==0) {
-                return query;
+    var url = "https://" + bfdbhost + "/post/" + name;
+    var options = {
+        method: 'POST',
+        uri: url,
+        body: rdfxml,
+        headers: { "Content-type": "application/xml" },
+        json: false // Takes JSON as string and converts to Object
+    };
+    var rp = require('request-promise');
+    rp(options)
+        .then(function (data) {
+            // {"name": "72a0a1b6-2eb8-4ee6-8bdf-cd89760d9f9a.rdf","objid": "/resources/instances/c0209952430001",
+            // "publish": {"status": "success","message": "posted"}}
+            console.log(data);
+            data = JSON.parse(data);
+            console.log(data.objid)
+            
+            var resp_data = {}
+            if (data.publish.status == "success") {
+                // IF successful, it is by definition in this case also posted.
+                resp_data = {
+                        "name": req.body.name, 
+                        "url": resources + name, 
+                        "objid": data.objid, 
+                        "lccn": lccn, 
+                        "publish": {"status":"published"}
+                    }
             } else {
-                return
+                resp_data = {
+                        "name": req.body.name, 
+                        "objid":  data.objid, 
+                        "publish": {"status": "error","message": data.publish.message }
+                    }
             }
-        } catch (e) {
-            return e.stderr.toString();
-        }
-    }
-
-    var rapperWithShell = function (file, done) {
-        console.log("file:" + file);
-        exec.exec(RAPPERCMD + ' -i rdfxml -o ntriples -c ' + file, done);
-    }
-
-    try{
-        var rdfxml = JSON.parse(req.body.rdfxml); 
-        var rdfpath = dirname + name;
-        //console.log(req.params);
-        console.log(rdfpath);
-        console.log('Publish POST: LCCN ' + lccn + ' Name: '+ name);
-        if (fs.existsSync(posted+name)){
-            fs.unlink(posted + name, function(err){
-                if (err) {
-                    console.error("Error deleting " + name);
-                } else {
-                    console.log("deleted " + name);
+            res.set('Content-Type', 'application/json');
+            res.status(200).send(resp_data);
+        })
+        .catch(function (err) {
+            // POST failed...
+            resp_data = {
+                    "name": req.body.name, 
+                    "objid":  objid, 
+                    "publish": {"status": "error","message": err }
                 }
-            });
-        }
-        //console.log('2')
-        fs.writeFile(rdfpath, rdfxml, {encoding: 'utf8', mode: 0o777} , function (err) {
-            if (err) res.status(500);
-            //console.log('3')    
-            console.log(rdfpath);
-            rapperWithShell(rdfpath, function (err, stdout, stderr) {
-                var errmsg;
-                //rapper
-                var zero="0 triples"
-                var warning="rapper: Warning"
-                var normalForm = "Unicode Normal Form C"
-                var error="rapper: Error"
-
-                //find in file
-                var vocab1="bibframe.org/vocab"
-                var rdfdesc="rdf:Description"
-
-                if (err) {          
-                    if (stderr.match(zero)) {
-                        errmsg = zero;
-                    } else if (stderr.match(warning)) {
-                        errmsg = warning;
-                    } else if (stderr.match(normalForm)) {
-                        errmsg = normalForm;
-                    } else if (stderr.match(error)) {
-                        errmsg = error;
-                    } 
-                } 
-        
-                errmsg = grepWithSyncShell(rdfpath, vocab1);
-                errmsg = grepWithSyncShell(rdfpath, rdfdesc);
-        
-                if (errmsg) {
-                    console.log("Error msg:" + errmsg)
-                    var errorres={"name": req.body.name, "objid": objid, "publish": {"status": "error","message": errmsg }};
-                    res.status(200).send(errorres);
-                } else {
-                    console.log("loading files from bfe");
-                    exec.exec(PASSWD, function (err, stdout, stderr) {
-                        if (err) res.status(500);
-                        var password = stdout;
-                        var mlcp=MLCPCMD + " import \
-                        -host " + MLHOST + " \
-                        -port " + MLPORT + " \
-                        -username " + MLUSER + " \
-                        -password " + MLPASS + " \
-                        -input_file_path " + dirname + " \
-                        -input_file_pattern '"+ name + "' \
-                        -output_uri_replace \"" + dirname + ",''\"  \
-                        -output_permissions id-user-role,read,id-user-role,execute,id-admin-role,update \
-                        -input_file_type documents \
-                        -document_type XML \
-                        -database '" + MLDB + "' \
-                        -modules '" + MLMODULESDB + "' \
-                        -transform_module /modules/bfe2mets.xqy \
-                        -transform_function transform \
-                        -transform_namespace http://loc.gov/ndmso/bfe-2-mets \
-                        -thread_count 4 "; console.log(mlcp.replace(/[\s|\n]+/g," "))
-                        exec.exec(mlcp.replace(/[\s|\n]+/g," "), function(err, stdout, stderr){
-                            if (err) {
-                                console.log("Error msg:" + stderr)
-                                res.status(200).send({"name": req.body.name, "objid": objid, "publish": {"status": "error","message": errmsg }});
-                            }                   
-                            res.status(200).send({"name": req.body.name, "url": resources + name, "objid": objid, "lccn": lccn, "publish": {"status":"published"}});
-                        });
-                    });
-                }
-            });
+            res.set('Content-Type', 'application/json');
+            res.status(500).send(resp_data);
         });
-    } catch (e) {
-        console.log('Post Error:'+ e.message);
-        res.status(500, e.message);
-    }
 });
 
-//var bfe_publish_response = bferouter.rute('/publishRsp');
-var prof_publish_response = router.route('/publishRsp');
 
+var prof_publish_response = router.route('/publishRsp');
 prof_publish_response.post(function(req,res){
    var shortuuid = require('short-uuid');
    var decimaltranslator = shortuuid("0123456789");
@@ -604,8 +538,8 @@ prof_publish_response.post(function(req,res){
                 //res.status(200).send("publishRsp2");
 });
 
-var prof_retrieveOCLC = bferouter.route('/retrieveOCLC');
 
+var prof_retrieveOCLC = bferouter.route('/retrieveOCLC');
 prof_retrieveOCLC.get(function(req, res) {
     var oclcnum = req.query.oclcnum;
     var oclckey = req.query.oclckey;
