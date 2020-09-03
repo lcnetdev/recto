@@ -13,6 +13,7 @@ var request = require('request');
 
 var $rdf = require('rdflib');
 var SaxonJS = require('saxon-js');
+var dataattributes = require('./lib/dataattributes');
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -114,24 +115,43 @@ apirouter.use(function(req, res, next) {
     next();
 });
 
-var api_list = apirouter.route('/list');
-api_list.get(function(req,res){
-    var daysAgo = req.query.daysago;
-    var d = new Date();
-    d.setDate(d.getDate()-15);
-    if (daysAgo !== undefined) {
-        d = new Date();
-        d.setDate(d.getDate()-parseInt(daysAgo));    
-    }
-    since = d.toISOString();
+
+var api_listwhere = apirouter.route('/list/');
+api_listwhere.get(function (req, res) {
     
-    var url = versoProxyAddr + "/verso/api/bfs?filter[where][modified][gt]=" + since;
+    var filter = "";
+    var view = req.query.view;
+    
+    var where = req.query.where;
+    if ( where !== undefined ) {
+        var where_parts = where.split(":");
+        var field = where_parts[0];
+        var value = where_parts[1];
+    
+        console.log(field);
+        console.log(value);
+    
+        filter = "filter=%7B%22where%22%3A%20%7B%22" + field + "%22%3A%20%22" + value + "%22%7D%7D";
+    } else {
+        var daysAgo = req.query.daysago;
+        var d = new Date();
+        d.setDate(d.getDate()-15);
+        if (daysAgo !== undefined) {
+            d = new Date();
+            d.setDate(d.getDate()-parseInt(daysAgo));    
+        }
+        since = d.toISOString();
+        filter = "filter[where][modified][gt]=" + since;
+    }
+    
+    console.log(filter);
+    var url = versoProxyAddr + "/verso/api/bfs?" + filter;
+    
     var options = {
         method: 'GET',
         uri: url,
         json: true // Takes JSON as string and converts to Object
     };
-    var dataattributes = require('./lib/dataattributes');
     //t = {"@id":"_:bnodekRpvFF2w3dB2VDka81QdpM","@type":["http://id.loc.gov/ontologies/bibframe/Title"],"http://id.loc.gov/ontologies/bibframe/mainTitle":[{"@value":"The heir affair"}]}
     //d.title = dataattributes.findTitle(t);
     
@@ -140,7 +160,6 @@ api_list.get(function(req,res){
     var rp = require('request-promise');
     rp(options)
         .then(function (data) {
-            // res.status(200).send(data);
             /*
                 kefo - note - 2020 08 31
                 Asking for the last 60 days of resources takes the same 
@@ -155,18 +174,40 @@ api_list.get(function(req,res){
                 d.contribution = dataattributes.findContribution(d.rdf);
                 d.catalogerid = dataattributes.findCatalogerId(d.rdf);
                 delete d.rdf;
+                delete d.url;
             });
-            res.set('Content-Type', 'application/json');
-            res.status(200).send(data);
+            
+            if (view === "text") {
+                fields = Object.keys(data[0]);
+                lines = ""
+                for (f of fields) {
+                    lines += f + "  "
+                }
+                lines += "\n"
+                
+                for (d of data) {
+                    for (f of fields) {
+                        if (d[f] !== undefined) {
+                            lines += d[f] + "  "
+                        }
+                    }
+                    lines += "\n"
+                }
+                res.set('Content-Type', 'text/plain');
+                res.status(200).send(lines);
+            } else {
+                res.set('Content-Type', 'application/json');
+                res.status(200).send(data);
+            }
         })
         .catch(function (err) {
             // POST failed...
+            console.log(err);
             res.status(500).send(err);
         });
 });
 
 var api_get = apirouter.route('/getStoredJSONLD/:id');
-
 api_get.get(function (req, res) {
     var url = versoProxyAddr + "/verso/api/bfs/" + req.params.id;
     var options = {
@@ -185,6 +226,7 @@ api_get.get(function (req, res) {
             res.status(500).send(err);
         });
 });
+
 
 //Profile Edit
 var router = express.Router();
