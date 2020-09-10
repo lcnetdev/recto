@@ -47,12 +47,15 @@ proxyObj = {
     },
     onProxyReq: function(proxyReq, req, res) {
         proxyReq.setHeader('Cache-Control', 'no-cache');
+        proxyReq.setHeader('Connection', 'keep-alive');
     },
     onProxyReqWs: function(proxyReq, req, res) {
         proxyReq.setHeader('Cache-Control', 'no-cache');
+        proxyReq.setHeader('Connection', 'keep-alive');
     },
     onProxyRes: function(proxyRes, req, res) {
         proxyRes.headers['Cache-Control'] = 'no-cache';
+        proxyRes.headers['Connection'] = 'keep-alive';
     }
 };
 var versoProxy = createProxyMiddleware(proxyObj);
