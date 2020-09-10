@@ -42,7 +42,8 @@ proxyObj = {
         '^/verso/explorer': '/explorer'
     },
     headers: {
-        "Cache-Control": "no-cache"
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
     },
     onProxyReq: function(proxyReq, req, res) {
         proxyReq.setHeader('Cache-Control', 'no-cache');
