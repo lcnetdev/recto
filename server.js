@@ -197,6 +197,71 @@ api_listwhere.get(function (req, res) {
         });
 });
 
+var api_listconfigswhere = apirouter.route('/listconfigs/');
+api_listconfigswhere.get(function (req, res) {
+    
+    var filter = "";
+    var view = req.query.view;
+    
+    var where = req.query.where;
+    if ( where !== undefined ) {
+        var where_parts = where.split(":");
+        var field = where_parts[0];
+        var value = where_parts[1];
+    
+        console.log(field);
+        console.log(value);
+    
+        filter = "filter=%7B%22where%22%3A%20%7B%22" + field + "%22%3A%20%22" + value + "%22%7D%7D";
+    }
+    
+    console.log(filter);
+    var url = versoProxyAddr + "/verso/api/configs?" + filter;
+    
+    var options = {
+        method: 'GET',
+        uri: url,
+        json: true // Takes JSON as string and converts to Object
+    };
+    var rp = require('request-promise');
+    rp(options)
+        .then(function (data) {
+            data.forEach(function(d){
+                d.created = d.metadata.createDate;
+                d.modified = d.metadata.updateDate;
+                delete d.json;
+                delete d.metadata;
+            });
+            if (view === "text") {
+                fields = Object.keys(data[0]);
+                lines = ""
+                for (f of fields) {
+                    lines += f + "  "
+                }
+                lines += "\n"
+                
+                for (d of data) {
+                    for (f of fields) {
+                        if (d[f] !== undefined) {
+                            lines += d[f] + "  "
+                        }
+                    }
+                    lines += "\n"
+                }
+                res.set('Content-Type', 'text/plain');
+                res.status(200).send(lines);
+            } else {
+                res.set('Content-Type', 'application/json');
+                res.status(200).send(data);
+            }
+        })
+        .catch(function (err) {
+            // POST failed...
+            console.log(err);
+            res.status(500).send(err);
+        });
+});
+
 var api_get = apirouter.route('/getStoredJSONLD/:id');
 api_get.get(function (req, res) {
     var url = versoProxyAddr + "/verso/api/bfs/" + req.params.id;
