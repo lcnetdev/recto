@@ -24,7 +24,6 @@ const JAVA_HOME = process.env.JAVA_HOME;
 const JENA_HOME = process.env.JENA_HOME;
 const JENA_RIOT = process.env.JENA_RIOT;
 const postToDir = process.env.POST_TO_DIR;
-const TMPDIR = process.env.TMPDIR ||  '/tmp/'
 const TD = process.env.TD ||  '/tmp/'
 const XSLTCMD = process.env.XSLTCMD ||  'xsltproc %STYLESHEET% %SOURCE%'
 const RAPPERCMD = process.env.RAPPER_EXEC ||  'rapper'
@@ -462,7 +461,7 @@ prof_rdfxml2jsonld.post(function(req, res){
                res.set('Content-Type', 'application/json+ld');
                res.status(200).send(data);
                if(fs.existsSync(tmpFile)){
-                    fs.unlinkSync(tmpFile);
+                fs.unlinkSync(tmpFile);
                }
             });
         });
