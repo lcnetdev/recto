@@ -675,22 +675,15 @@ prof_retrieveOCLC.get(function(req, res) {
     });
 });
 
-//var bfe_retrieveLDS = bferouter.route('/retrieveLDS');
 var prof_retrieveLDS = router.route('/retrieveLDS');
-
 prof_retrieveLDS.get(function(req, res) {
 
-    //var shortuuid = require('short-uuid');
-
-    //var decimaltranslator = shortuuid("0123456789");
-
-    //var request = require('request');
-
     var rp = require('request-promise');
-
     _ = require('lodash');
-
     var instanceURL = req.query.uri;
+    var resourceuri = req.query.uri.replace('.jsonld', '')
+    resourceuri = resourceuri.replace('.json', '')
+    resourceuri = resourceuri.replace('https:', 'http:')
 
     var options = {
         uri: instanceURL,
@@ -708,117 +701,115 @@ prof_retrieveLDS.get(function(req, res) {
     rp(options).then(function(instanceBody) {
         //workURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:instanceOf']['@id']
 
-        _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
-            if (!_.isEmpty(value['bibframe:instanceOf'])) {
-                workURL = value['bibframe:instanceOf']['@id'];
-                console.log("Work:" + workURL);                    
+        var workURL = null;
+        console.log(resourceuri);
+        if (!instanceURL.match(/editor-pkg/)){
+            if (instanceBody["@graph"] !== undefined ) {
+                _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
+                    if (!_.isEmpty(value['bibframe:instanceOf'])) {
+                        workURL = value['bibframe:instanceOf']['@id'];
+                        console.log("BFDB Work:" + workURL);                    
+                    }
+                });
+            } else {
+                /*
+                    This is unused, presently.  14 Sept 2020
+                    The Work URL is needed in order to fetch the Work so it 
+                    can be added to the Instance to support simultaneous
+                    editing of WOrk and Instance.  I think this is a bad idea,
+                    which is why this is unused presently.  
+                */
+                instance = _.find(instanceBody, {"@id": resourceuri});
+                if (instance["http://id.loc.gov/ontologies/bibframe/instanceOf"] !== undefined) {
+                    work = _.find(instance["http://id.loc.gov/ontologies/bibframe/instanceOf"], "@id");
+                    if (work !== undefined) {
+                        workURL = work["@id"];
+                        console.log("ID Work:" + workURL);
+                    }
+                }
             }
-        });
-
-        if (options.uri.match(/editor-pkg/)){
-            workURL = null;
+        } else {
             console.log("Editor Package Mode");
         }
-
-        if (!options.uri.match(/editor-pkg/) && _.some(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), "bibframe:hasItem")) {
-            //itemURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:hasItem']['@id']
-            /*var itemURL;
-            var itemURLs;            
-            _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
-                if (!_.isEmpty(value['bibframe:hasItem']) && _.isArray(value['bibframe:hasItem'])) {
-                    itemURLs = value['bibframe:hasItem'];
-                } else if (!_.isEmpty(value['bibframe:hasItem'])) {
-                    console.log(value['bibframe:hasItem']);
-                    itemURLs = [];
-                    itemURLs.push(value['bibframe:hasItem']);
-                }
-            });*/
-
-            workURL = workURL.replace('id.loc.gov', bfdbhost) + '.jsonld';
-            workURL = workURL.replace(/^(http:)/,"");
-            jsonldReturn = _.concat(instanceBody, jsonldReturn);
-            console.log("Load Work2:" + workURL);
-            return rp({
-                uri: workURL,
-                json: true
-            }).then(function(workBody) {
-                console.log("Work Body");
-                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
-                jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
-
-                if(!_.isEmpty(itemURLs)){
-                    console.log("Load Item:" + itemURLs[0]);
-                    for(var i=0;i<itemURLs.length;i++){
-                        itemURL = itemURLs[i]["@id"].replace('id.loc.gov', bfdbhost) + '.jsonld';
-                        return rp({
-                            uri: itemURL,
-                            json: true
-                        }).then(function(itemBody) {
-                            jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
-                            jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
-                        }).catch(function (err){
-                            console.log(err);
-                        }).finally(function(){
-                            //if (i == itemURLs.length)
-                            //    res.status(200).send(jsonldReturn[0]);
-                            console.log("item " + i + " done");
-                        });
-                    }
-                } else {
-                    /*console.log(JSON.stringify(itemURLs));
-                    var ps = [];
-                    for (var i=0;i<itemURLs.length;i++) {
-                        console.log(i);
-                        console.log(itemURLs[i]);
-                        var itemURL = itemURLs[i]['@id'].replace('id.loc.gov', bfdbhost) + '.jsonld';
-                        console.log(itemURL);
-                        //jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
-                        //jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
-                        var itemRequest = {uri:itemURL, json: true};
-                        ps.push(rp(itemRequest));
-                    }
-
-                    Promise.all(ps)
-                        .then((itemBody) => {
-                            jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
-                            jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
-                            res.status(200).send(jsonldReturn[0]);
-                        }).catch(function (err){
-                            res.status(500).send(err.message);
-                            console.log(err);
-                        })*/
-                }
-                console.log("junk");
-                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
-                jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
-                //res.status(200).send(jsonldReturn[0]);
-            }).catch(function (err){
-                console.log(err);
-            }).finally(function() {
-                res.status(200).send(jsonldReturn[0]);
-                console.log("done");
-            });
-
-        } else {
-            jsonldReturn = _.concat(instanceBody, jsonldReturn);
-            if (!_.isEmpty(workURL)){
+        
+        if (instanceBody["@graph"] !== undefined) {
+            // BFDB uses @graph.  ID does not.  This is for BFDB.
+            if (
+                !instanceURL.match(/editor-pkg/) && 
+                _.some(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), "bibframe:hasItem")
+               ) {
+            
                 workURL = workURL.replace('id.loc.gov', bfdbhost) + '.jsonld';
-                workURL.replace(/^(http:)/,"");
-                console.log("Load Work:" + workURL);
+                workURL = workURL.replace(/^(http:)/,"");
+                jsonldReturn = _.concat(instanceBody, jsonldReturn);
+                console.log("Load Work2:" + workURL);
                 return rp({
                     uri: workURL,
+                    headers: {
+                        'User-Agent': 'Recto/BFE Lookup'
+                    },
                     json: true
                 }).then(function(workBody) {
+                    console.log("Work Body");
                     jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
                     jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
-                    res.status(200).send(jsonldReturn[0]);
+    
+                    if(!_.isEmpty(itemURLs)){
+                        console.log("Load Item:" + itemURLs[0]);
+                        for(var i=0;i<itemURLs.length;i++){
+                            itemURL = itemURLs[i]["@id"].replace('id.loc.gov', bfdbhost) + '.jsonld';
+                            return rp({
+                                uri: itemURL,
+                                json: true
+                            }).then(function(itemBody) {
+                                jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], itemBody["@graph"]);
+                                jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], itemBody["@context"]);
+                            }).catch(function (err){
+                                console.log(err);
+                            }).finally(function(){
+                                //if (i == itemURLs.length)
+                                //    res.status(200).send(jsonldReturn[0]);
+                                console.log("item " + i + " done");
+                            });
+                        }
+                    }
+                    console.log("junk");
+                    jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                    jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
+                    //res.status(200).send(jsonldReturn[0]);
                 }).catch(function (err){
                     console.log(err);
-                    res.status(500).send(err.message);
+                }).finally(function() {
+                    res.status(200).send(jsonldReturn[0]);
+                    console.log("done");
                 });
-            } 
-            res.status(200).send(jsonldReturn[0]);
+    
+            } else {
+                jsonldReturn = _.concat(instanceBody, jsonldReturn);
+                if (!_.isEmpty(workURL)){
+                    workURL = workURL.replace('id.loc.gov', bfdbhost) + '.jsonld';
+                    workURL.replace(/^(http:)/,"");
+                    console.log("Load Work:" + workURL);
+                    return rp({
+                        uri: workURL,
+                        json: true
+                    }).then(function(workBody) {
+                        jsonldReturn[0]["@graph"] = _.concat(jsonldReturn[0]["@graph"], workBody["@graph"]);
+                        jsonldReturn[0]["@context"] = _.extend(jsonldReturn[0]["@context"], workBody["@context"]);
+                        res.status(200).send(jsonldReturn[0]);
+                    }).catch(function (err){
+                        console.log(err);
+                        res.status(500).send(err.message);
+                    });
+                } 
+                res.status(200).send(jsonldReturn[0]);
+            }
+        
+        } else {
+            // instanceBody does not contain @graph.  Let's presume this is ID.
+            res.status(200).send(instanceBody);
         }
+            
     });
 
     //    res.status(200).send(jsonldReturn);
