@@ -30,6 +30,7 @@ const RAPPERCMD = process.env.RAPPER_EXEC ||  'rapper'
 
 const MLUSER = process.env.MLUSER;
 const MLPASS = process.env.MLPASS;
+const OCLCKEY = process.env.OCLCKEY;
 
 console.log(versoProxyAddr);
 proxyObj = { 
@@ -638,7 +639,7 @@ prof_publish_response.post(function(req,res){
 var prof_retrieveOCLC = bferouter.route('/retrieveOCLC');
 prof_retrieveOCLC.get(function(req, res) {
     var oclcnum = req.query.oclcnum;
-    var oclckey = req.query.oclckey;
+    var oclckey = OCLCKEY;
     console.log('oclckey:' + oclckey);
     var oclcurl = `http://www.worldcat.org/webservices/catalog/content/${oclcnum}?wskey=${oclckey}`
     var rp = require('request-promise');
