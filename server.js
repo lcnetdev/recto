@@ -629,6 +629,9 @@ prof_retrieveLDS.get(function(req, res) {
 
     var options = {
         uri: instanceURL,
+        headers: {
+            'User-Agent': 'Recto/BFE Lookup'
+        },
         json: true
     };
 
