@@ -69,20 +69,6 @@ app.use(bodyParser.json({
     }
 }));
 
-app.use(bodyParser.json({
-    limit: '250mb',
-    verify: function (req, res, buf, encoding) {
-        req.rawBody = buf;
-    }
-}));
-
-app.use(bodyParser.urlencoded({
-    extended: false,
-    limit: '250mb'
-}));
-
-app.use(bodyParser.json({limit:'250mb'}));
-
 app.use(express.static(__dirname + '/'));
 
 app.use('/profile-edit', express.static(path.join(__dirname, '/profile-edit/source')));
