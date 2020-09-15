@@ -36,37 +36,9 @@
       <script src="//oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
 
-    <script type="text/javascript" src="/static/js/jquery.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery.syntaxhighlighter.min.js"></script>
     <script type="text/javascript" src="/static/js/bibframe.js"></script>
-    
-    
-
-    <script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
-
-	<script type="text/javascript">
-		$(document).ready(function()
-			{
-				$("#morePropsTable").tablesorter({sortList: [[0,0]]});
-				$("#moreClassesTable").tablesorter({sortList: [[0,0]]});
-				
-				$("#propsTable1").tablesorter({sortList: [[0,0]]});
-				$("#propsTable2").tablesorter({sortList: [[0,0]]});
-				$("#propsTable3").tablesorter({sortList: [[0,0]]});
-				$("#propsTable4").tablesorter({sortList: [[0,0]]});
-				$("#propsTable5").tablesorter({sortList: [[0,0]]});
-				$("#propsTable6").tablesorter({sortList: [[0,0]]});
-				$("#propsTable7").tablesorter({sortList: [[0,0]]});
-				$("#propsTable8").tablesorter({sortList: [[0,0]]});
-				$("#propsTable9").tablesorter({sortList: [[0,0]]});
-				$("#propsTable-").tablesorter({sortList: [[0,0]]});
-				
-				$("#vocabUpdatesTable").tablesorter({sortList: [[2,1]]});
-				
-			}
-		);
-	</script>
 				
     <style>
         @media screen {
@@ -81,23 +53,6 @@
             }
         }
 	</style>
-
-    <script type="text/javascript">
-        $.SyntaxHighlighter.init({
-            'lineNumbers': false
-            });
-
-        $(".collapse").collapse();
-
-        $(document).ready(function() {
-            getExamples();
-        });
-
-    </script>
-
-    
-		
-	
 
   </head>
 
@@ -144,9 +99,9 @@
     </div>
 </div>
 <div class="container">
-    <h3><a href="http://bibframe.org/bfe/index.html">BIBFRAME Editor (BFE)</a></h3>
+    <h3><a href="/bfe/index.html">BIBFRAME Editor (BFE)</a></h3>
     <p>Demonstration site for viewing editor functionality. This demonstration editor contains a sample set of descriptions entered by LC catalogers. This sample set includes original and copy cataloging of materials in a variety of formats. Any description input by a visitor can be saved to the temporary save file and recalled for a limited time. Periodically, as improvements are made to the BFE, this sample set will be reloaded and any saved descriptions will be discarded.</p>
-    <h3><a href="http://bibframe.org/profile-edit/">BIBFRAME Profile Editor (BFPE)</a></h3>
+    <h3><a href="/profile-edit/">BIBFRAME Profile Editor (BFPE)</a></h3>
     <p>Demonstration site for viewing editor profiles. BIBFRAME editor profiles currently used by the Library of Congress are available to view. These profiles may be adjusted by a visitor and any changed profile can be used immediately in the demonstration BFE. These changes are not saved for re-use, and the editor profiles may be reloaded as they are changed by LC staff.</p>
     <h4>Resources:</h4>
     <ul>
