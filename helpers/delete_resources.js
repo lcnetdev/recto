@@ -14,12 +14,14 @@ if (args[1] !== undefined) where = args[1];
 
 if ( parseInt(limit) > 0 ) {
     filter="filter[limit]=" + limit + "&"
+} else {
+    filter = "";
 }
 
 if (where) {
     var where_parts = where.split(":");
     var field = where_parts[0];
-    var value = where_parts[1];
+    var value = where_parts.slice(1).join(':');
     
     console.log(field);
     console.log(value);
