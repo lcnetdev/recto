@@ -25,12 +25,8 @@ if (where) {
     console.log(value);
     
     filter = filter + "filter=%7B%22where%22%3A%20%7B%22" + field + "%22%3A%20%22" + value + "%22%7D%7D";
-} else {
-        var d = new Date();
-        d.setDate(d.getDate()-15);
-        since = d.toISOString();
-        filter = filter + "filter[where][modified][gt]=" + since;
-    }
+}
+
 console.log(filter);
 var url = process.env.VERSO_PROXY + "/verso/api/bfs?" + filter;
     
