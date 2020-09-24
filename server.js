@@ -34,10 +34,8 @@ const MLPASS = process.env.MLPASS;
 const OCLCKEY = process.env.OCLCKEY;
 
 console.log(versoProxyAddr);
-var VERSO_ADDR = versoProxyAddr;
-if (USE_VERSO_PROXY) {
-    VERSO_ADDR = versoProxyAddr + "/verso";
-}
+var VERSO_ADDR = versoProxyAddr + "/verso";
+
 proxyObj = { 
     changeOrigin: true, 
     secure: false, 
