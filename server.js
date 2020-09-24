@@ -19,6 +19,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const appPort = process.env.APPPORT || 3000;
 const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
+const USE_VERSO_PROXY = process.env.USE_VERSO_PROXY || 0;
 const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
 const JAVA_HOME = process.env.JAVA_HOME;
 const JENA_HOME = process.env.JENA_HOME;
@@ -33,6 +34,10 @@ const MLPASS = process.env.MLPASS;
 const OCLCKEY = process.env.OCLCKEY;
 
 console.log(versoProxyAddr);
+var VERSO_ADDR = versoProxyAddr;
+if (USE_VERSO_PROXY) {
+    VERSO_ADDR = versoProxyAddr + "/verso";
+}
 proxyObj = { 
     changeOrigin: true, 
     secure: false, 
@@ -135,7 +140,7 @@ api_listwhere.get(function (req, res) {
     }
     
     console.log(filter);
-    var url = versoProxyAddr + "/verso/api/bfs?" + filter;
+    var url = VERSO_ADDR + "/api/bfs?" + filter;
     
     var options = {
         method: 'GET',
@@ -216,7 +221,7 @@ api_listconfigswhere.get(function (req, res) {
     }
     
     console.log(filter);
-    var url = versoProxyAddr + "/verso/api/configs?" + filter;
+    var url = VERSO_ADDR + "/api/configs?" + filter;
     
     var options = {
         method: 'GET',
@@ -264,7 +269,7 @@ api_listconfigswhere.get(function (req, res) {
 
 var api_get = apirouter.route('/getStoredJSONLD/:id');
 api_get.get(function (req, res) {
-    var url = versoProxyAddr + "/verso/api/bfs/" + req.params.id;
+    var url = VERSO_ADDR + "/api/bfs/" + req.params.id;
     var options = {
         method: 'GET',
         uri: url,
@@ -587,7 +592,7 @@ prof_publish_response.post(function(req,res){
    //}
 
    var name = "%7B%22where%22%3A%20%7B%22name%22%3A%20%22" + decimaltranslator.toUUID(filename.split(/[a-zA-Z]/)[1])+ "%22%7D%7D";
-   var url = versoProxyAddr + "/verso/api/bfs?filter="+name;
+   var url = VERSO_ADDR + "/api/bfs?filter="+name;
    console.log(url);
    console.log('PublishRsp POST: filename ' + filename);
    console.log(req.body);
@@ -610,7 +615,7 @@ prof_publish_response.post(function(req,res){
                 rp(options).then(function (postbody) {
                     //var id = postbody.id;
                     delete postbody.id
-                    var posturl = versoProxyAddr + "/verso/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
+                    var posturl = VERSO_ADDR + "/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
                     var postoptions = {
                         method: 'POST',
                         uri: posturl,
@@ -822,7 +827,7 @@ prof_whichrt.get(function(req,res){
     //var request = require('request');
     var uri  = req.query.uri;
     if ( !uri.startsWith("http") && uri.startsWith('/') ) {
-        uri = versoProxyAddr + uri
+        uri = VERSO_ADDR + uri
     };
     req.pipe(request(uri)).pipe(res);
 });
