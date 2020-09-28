@@ -27,8 +27,7 @@ while (today.getTime() > since.getTime()) {
     
     since = since.toISOString();
     until = weeknext.toISOString();
-    
-    // filter[where][and][0][title]=My%20Post&filter[where][and][1][content]=Hello
+
     filter = {
         start: since,
         end: until,
