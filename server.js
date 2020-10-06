@@ -33,6 +33,9 @@ const MLUSER = process.env.MLUSER;
 const MLPASS = process.env.MLPASS;
 const OCLCKEY = process.env.OCLCKEY;
 
+
+
+
 console.log(versoProxyAddr);
 var VERSO_ADDR = versoProxyAddr + "/verso";
 
@@ -866,6 +869,18 @@ app.post('/login',
                                    failureFlash: false })
 );
 
+const ldp = require("../../ldpenv/ldpjs/index.js");
+/******************************************/
+
+var config = {
+    createIndexDoc: function(content) {
+        return { good: "yes" };
+    }
+};
+
+ldp.setConfig(config);
+/******************************************/
+app.use('/ldp', ldp);
 
 app.use('/profile-edit/server', router);
 app.use('/bfe/server', bferouter);
