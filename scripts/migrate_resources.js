@@ -12,14 +12,12 @@ var model;
 
 if (args[0] !== undefined) model = args[0];
 
-var x = 0;
-if (model == "config" || model == "bf") {
-    for (var k in store.models.config) {
-        var c = store.models.config[k];
-        //console.log(k);
+async function theForLoop(url, data) {
+    for (var k in data) {
+        var c = data[k];
         var options = {
             method: 'POST',
-            uri: "http://localhost:" + appPort + "/ldp/verso/configs/",
+            uri: url,
             body: c,
             headers: {
                 'Slug': k,
@@ -28,40 +26,43 @@ if (model == "config" || model == "bf") {
             resolveWithFullResponse: true,
             //json: false // Takes JSON as string and converts to Object
         };
-        
-        if (x < 10) {
-            console.log(options.uri + k);
-            var r = doRequest(options);
-            x++;
+        try {
+            let r = await doRequest(options);
+            if (r.statusCode === 201) {
+                console.log("Success: " + options.uri + options.headers.Slug);
+            } else {
+                console.log("Something went wrong.");
+                console.log(r.statusCode);
+            }
+        } catch (error) {
+            console.error('ERROR:');
+            console.error(error);
         }
     }
+}
+
+var x = 0;
+if (model == "configs" || model == "resources") {
+    var m = "config";
+    if (model == "resources") {
+        m = "bf";
+    }
+    var url = "http://localhost:" + appPort + "/ldp/verso/" + model + "/";
+    var data = store.models[m];
+    theForLoop(url, data);
 } else {
     console.log("Incorrect model designated.");
     process.exit(0); 
 }
 
 async function doRequest(options) {
-    await rp(options)
+    return new Promise((resolve, reject) => {
+        rp(options)
         .then(response => {
-            //console.log(options);
-            console.log("success?");
-            console.log(response.statusCode);
+            resolve(response);
         })
         .catch(err => {
-            console.log("error?");
-            //console.log(err);
-            throw err;
+            reject(err);
         });
+    });
 }
-
-
-/*
-const fs = require('fs');
-
-fs.readFile('C:\\Users\\kevinford\\work\\versoenv\\verso\\bfpilot.json', (err, store) => {
-  if (err) throw err;
-  for (var k in store) {
-      console.log(k);
-  }
-});
-*/
