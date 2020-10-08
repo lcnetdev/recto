@@ -18,6 +18,7 @@ var dataattributes = require('./lib/dataattributes');
 const dotenv = require('dotenv');
 dotenv.config();
 const appPort = process.env.APPPORT || 3000;
+const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
 const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
 const USE_VERSO_PROXY = process.env.USE_VERSO_PROXY || 0;
 const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
@@ -33,7 +34,40 @@ const MLUSER = process.env.MLUSER;
 const MLPASS = process.env.MLPASS;
 const OCLCKEY = process.env.OCLCKEY;
 
+const ldp = require("../../ldpenv/ldpjs/index.js");
+/******************************************/
 
+var config = {
+    createIndexDoc: function(version) {
+        var index = {};
+        
+        if (version.content.configType !== undefined) {
+            // This is a 'config' thing.  A profile, probably.
+            index.resourceType = version.content.configType;
+            if (version.content.name !== undefined) {
+                index.label = version.content.name;
+            }
+        }
+        
+        if (version.content.rdf !== undefined) {
+            // We have a verso resource.
+            index.resourceType = "resource";
+            if (version.content.profile !== undefined) {
+                index.profile = version.content.profile;
+            }
+            var rdf = JSON.parse(version.content.rdf);
+            index.title = dataattributes.findTitle(rdf);
+            index.lccn = dataattributes.findLccn(rdf);
+            index.contribution = dataattributes.findContribution(rdf);
+            index.catalogerid = dataattributes.findCatalogerId(rdf);
+        }
+        return index;
+    }
+};
+
+ldp.setConfig(config);
+/******************************************/
+app.use('/ldp', ldp);
 
 
 console.log(versoProxyAddr);
@@ -115,7 +149,7 @@ apirouter.use(function(req, res, next) {
 var api_listwhere = apirouter.route('/list/');
 api_listwhere.get(function (req, res) {
     
-    var filter = "";
+    var query = [];
     var view = req.query.view;
     
     var where = req.query.where;
@@ -136,17 +170,25 @@ api_listwhere.get(function (req, res) {
             d = new Date();
             d.setDate(d.getDate()-parseInt(daysAgo));    
         }
-        since = d.toISOString();
-        filter = "filter[where][modified][gt]=" + since;
+        query = [
+            // { $match: {"resource.modified": {"$gte": d } } },
+            { $match: {"resource.versions.content.modified": {"$gte": d } } },
+            { $sort : {"resource.modified": -1 } },
+            { $limit : 15 }
+        ];
     }
     
-    console.log(filter);
-    var url = VERSO_ADDR + "/api/bfs?" + filter;
+    console.log(JSON.stringify(query));
+    var url = LDPJS_ADDR + "/ldp/verso/resources";
     
     var options = {
-        method: 'GET',
+        method: 'POST',
         uri: url,
-        json: true // Takes JSON as string and converts to Object
+        body: query,
+        headers: {
+            'Content-type': "application/x-mongoquery+json"
+        },
+        json: true // Automatically stringifies the body to JSON
     };
     //t = {"@id":"_:bnodekRpvFF2w3dB2VDka81QdpM","@type":["http://id.loc.gov/ontologies/bibframe/Title"],"http://id.loc.gov/ontologies/bibframe/mainTitle":[{"@value":"The heir affair"}]}
     //d.title = dataattributes.findTitle(t);
@@ -164,24 +206,27 @@ api_listwhere.get(function (req, res) {
                 needs.  HOWEVER, 60 days worth of data is 20MB versus less than 
                 500Kb of winnowed data.
             */
-            data.forEach(function(d){
-                d.title = dataattributes.findTitle(d.rdf);
-                d.lccn = dataattributes.findLccn(d.rdf);
-                d.contribution = dataattributes.findContribution(d.rdf);
-                d.catalogerid = dataattributes.findCatalogerId(d.rdf);
-                delete d.rdf;
-                delete d.url;
+            var items = [];
+            data.results.forEach(function(d){
+                var doc = d.data;
+                doc.title = dataattributes.findTitle(doc.rdf);
+                doc.lccn = dataattributes.findLccn(doc.rdf);
+                doc.contribution = dataattributes.findContribution(doc.rdf);
+                doc.catalogerid = dataattributes.findCatalogerId(doc.rdf);
+                delete doc.rdf;
+                delete doc.url;
+                items.push(doc);
             });
             
             if (view === "text") {
-                fields = Object.keys(data[0]);
+                fields = Object.keys(items[0]);
                 lines = ""
                 for (f of fields) {
                     lines += f + "  "
                 }
                 lines += "\n"
                 
-                for (d of data) {
+                for (d of items) {
                     for (f of fields) {
                         if (d[f] !== undefined) {
                             lines += d[f] + "  "
@@ -868,19 +913,6 @@ app.post('/login',
                                    failureRedirect: '/login',
                                    failureFlash: false })
 );
-
-const ldp = require("../../ldpenv/ldpjs/index.js");
-/******************************************/
-
-var config = {
-    createIndexDoc: function(content) {
-        return { good: "yes" };
-    }
-};
-
-ldp.setConfig(config);
-/******************************************/
-app.use('/ldp', ldp);
 
 app.use('/profile-edit/server', router);
 app.use('/bfe/server', bferouter);
