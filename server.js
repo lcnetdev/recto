@@ -4,11 +4,9 @@ const app = express();
 const path = require('path');
 const bodyParser = require('body-parser');
 const profile = "/bfe/static/profiles/bibframe/";
-//const resources = "/resources/";
 const resources = "/data/";
 const fs = require('fs');
 var _ = require('underscore');
-const {createProxyMiddleware} = require('http-proxy-middleware');
 var request = require('request');
 
 var $rdf = require('rdflib');
@@ -19,8 +17,6 @@ const dotenv = require('dotenv');
 dotenv.config();
 const appPort = process.env.APPPORT || 3000;
 const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
-const versoProxyAddr = process.env.VERSO_PROXY || 'http://localhost:3030';
-const USE_VERSO_PROXY = process.env.USE_VERSO_PROXY || 0;
 const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
 const JAVA_HOME = process.env.JAVA_HOME;
 const JENA_HOME = process.env.JENA_HOME;
@@ -68,38 +64,6 @@ var config = {
 ldp.setConfig(config);
 /******************************************/
 app.use('/ldp', ldp);
-
-
-console.log(versoProxyAddr);
-var VERSO_ADDR = versoProxyAddr + "/verso";
-
-proxyObj = { 
-    changeOrigin: true, 
-    secure: false, 
-    target: versoProxyAddr, 
-    pathRewrite: {
-        '^/verso' : '/verso', 
-        '^/verso/explorer': '/explorer'
-    },
-    headers: {
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive"
-    },
-    onProxyReq: function(proxyReq, req, res) {
-        proxyReq.setHeader('Cache-Control', 'no-cache');
-        proxyReq.setHeader('Connection', 'keep-alive');
-    },
-    onProxyReqWs: function(proxyReq, req, res) {
-        proxyReq.setHeader('Cache-Control', 'no-cache');
-        proxyReq.setHeader('Connection', 'keep-alive');
-    },
-    onProxyRes: function(proxyRes, req, res) {
-        proxyRes.headers['Cache-Control'] = 'no-cache';
-        proxyRes.headers['Connection'] = 'keep-alive';
-    }
-};
-var versoProxy = createProxyMiddleware(proxyObj);
-app.use("/verso", versoProxy);
 
 app.use(cors());
 app.use(bodyParser.json({
@@ -154,15 +118,22 @@ api_listwhere.get(function (req, res) {
     
     var where = req.query.where;
     if ( where !== undefined ) {
-        var where_parts = where.split(":");
-        var field = where_parts[0];
-        var value = where_parts[1];
-    
-        console.log(field);
-        console.log(value);
-    
+        var matches = []
+        if (typeof where === 'string') {
+            var where_parts = where.split(":");
+            var field = where_parts[0];
+            var value = where_parts[1];
+            matches.push({ $match: {[field]: {"$eq": value } } });
+        } else if (typeof where === 'object') {
+            where.forEach(function (w) {
+                var where_parts = w.split(":");
+                var field = where_parts[0];
+                var value = where_parts[1];
+                matches.push({ $match: {[field]: {"$eq": value } } });
+            })
+        }
         query = [
-            { $match: {[field]: {"$eq": value } } },
+            ...matches,
             { $sort : {"modified": -1 } }  
         ];
     } else {
@@ -240,7 +211,7 @@ api_listwhere.get(function (req, res) {
                 }
             } else {
                 res.set('Content-Type', 'application/json');
-                res.status(200).send(data);
+                res.status(200).send(items);
             }
         })
         .catch(function (err) {
@@ -258,15 +229,22 @@ api_listconfigswhere.get(function (req, res) {
     
     var where = req.query.where;
     if ( where !== undefined ) {
-        var where_parts = where.split(":");
-        var field = where_parts[0];
-        var value = where_parts[1];
-    
-        console.log(field);
-        console.log(value);
-    
+        var matches = []
+        if (typeof where === 'string') {
+            var where_parts = where.split(":");
+            var field = where_parts[0];
+            var value = where_parts[1];
+            matches.push({ $match: {[field]: {"$eq": value } } });
+        } else if (typeof where === 'object') {
+            where.forEach(function (w) {
+                var where_parts = w.split(":");
+                var field = where_parts[0];
+                var value = where_parts[1];
+                matches.push({ $match: {[field]: {"$eq": value } } });
+            })
+        }
         query = [
-            { $match: {[field]: {"$eq": value } } },
+            ...matches,
             { $sort : {"modified": -1 } }  
         ];
     }
@@ -291,8 +269,10 @@ api_listconfigswhere.get(function (req, res) {
                 var doc = d.data;
                 doc.created = doc.metadata.createDate;
                 doc.modified = doc.metadata.updateDate;
-                delete doc.json;
-                delete doc.metadata;
+                if (view === "text") {
+                    delete doc.json;
+                    delete doc.metadata;
+                }
                 items.push(doc);
             });
             if (view === "text") {
@@ -315,7 +295,7 @@ api_listconfigswhere.get(function (req, res) {
                 res.status(200).send(lines);
             } else {
                 res.set('Content-Type', 'application/json');
-                res.status(200).send(data);
+                res.status(200).send(items);
             }
         })
         .catch(function (err) {
@@ -327,7 +307,7 @@ api_listconfigswhere.get(function (req, res) {
 
 var api_get = apirouter.route('/getStoredJSONLD/:id');
 api_get.get(function (req, res) {
-    var url = VERSO_ADDR + "/api/bfs/" + req.params.id;
+    var url = LDPJS_ADDR + "/ldp/verso/resources/" + req.params.id;
     var options = {
         method: 'GET',
         uri: url,
@@ -632,73 +612,6 @@ prof_publish.post(function(req,res){
 });
 
 
-var prof_publish_response = router.route('/publishRsp');
-prof_publish_response.post(function(req,res){
-   var shortuuid = require('short-uuid');
-   var decimaltranslator = shortuuid("0123456789");
-   //var request = require('request');
-   var rp = require('request-promise');
-   req.setTimeout(500000);
-   if(req.body.constructor === Object && Object.keys(req.body).length === 0) {
-       throw new Error('publishRsp - req.body is empty');
-   }
-
-   var filename = path.basename(req.body.name, ".rdf");
-   //if (filename !== path.basename(req.body.name)) {
-   //    console.log("basename");
-   //    filename = path.basename(req.body.name, path.extname(req.body.name));
-   //}
-
-   var name = "%7B%22where%22%3A%20%7B%22name%22%3A%20%22" + decimaltranslator.toUUID(filename.split(/[a-zA-Z]/)[1])+ "%22%7D%7D";
-   var url = VERSO_ADDR + "/api/bfs?filter="+name;
-   console.log(url);
-   console.log('PublishRsp POST: filename ' + filename);
-   console.log(req.body);
-
-   var json = req.body;
-
-   var options = {  uri: url,
-                    json: true,
-                    transform: function(body){
-                        var postbody = body[0];
-                        console.log('Transformed:'+ json.objid);
-                        postbody.status = json.publish.status;
-                        postbody.objid = json.objid;
-                        return postbody;
-                    }
-                };
-                //success
-                console.log(json.objid + ' ' + json.publish.status);
-                if (json.publish.status === "success"){
-                rp(options).then(function (postbody) {
-                    //var id = postbody.id;
-                    delete postbody.id
-                    var posturl = VERSO_ADDR + "/api/bfs/upsertWithWhere?where=%7B%22name%22%3A%20%22"+postbody.name+"%22%7D";
-                    var postoptions = {
-                        method: 'POST',
-                        uri: posturl,
-                        body: postbody,
-                        json: true // Automatically stringifies the body to JSON
-                    };
-
-                    rp(postoptions)
-                        .then(function (parsedBody) {
-                            res.status(200).send('parsedBody');
-                        })
-                        .catch(function (err) {
-                            // POST failed...
-                            res.status(500).send(err);
-                        })
-                   //res.status(200).send('publishRsp');
-                })
-                } else {
-                    console.log ("Publish status:" + json.publish.status + " " + json.name + " " + json.publish.message);
-                    res.status(200).send('Publish status:' + json.publish.status + " " + json.name);
-                }
-                //res.status(200).send("publishRsp2");
-});
-
-
 var prof_retrieveOCLC = bferouter.route('/retrieveOCLC');
 prof_retrieveOCLC.get(function(req, res) {
     var oclcnum = req.query.oclcnum;
@@ -768,6 +681,7 @@ prof_retrieveLDS.get(function(req, res) {
         console.log(resourceuri);
         if (!instanceURL.match(/editor-pkg/)){
             if (instanceBody["@graph"] !== undefined ) {
+                // BFDB uses @graph.  ID does not.  This is for BFDB.
                 _.forEach(_.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/")), function(value) {
                     if (!_.isEmpty(value['bibframe:instanceOf'])) {
                         workURL = value['bibframe:instanceOf']['@id'];
@@ -885,7 +799,7 @@ prof_whichrt.get(function(req,res){
     //var request = require('request');
     var uri  = req.query.uri;
     if ( !uri.startsWith("http") && uri.startsWith('/') ) {
-        uri = VERSO_ADDR + uri
+        uri = LDPJS_ADDR + uri
     };
     req.pipe(request(uri)).pipe(res);
 });
