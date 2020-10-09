@@ -161,7 +161,10 @@ api_listwhere.get(function (req, res) {
         console.log(field);
         console.log(value);
     
-        filter = "filter=%7B%22where%22%3A%20%7B%22" + field + "%22%3A%20%22" + value + "%22%7D%7D";
+        query = [
+            { $match: {[field]: {"$eq": value } } },
+            { $sort : {"modified": -1 } }  
+        ];
     } else {
         var daysAgo = req.query.daysago;
         var d = new Date();
@@ -172,9 +175,8 @@ api_listwhere.get(function (req, res) {
         }
         query = [
             // { $match: {"resource.modified": {"$gte": d } } },
-            { $match: {"resource.versions.content.modified": {"$gte": d } } },
-            { $sort : {"resource.modified": -1 } },
-            { $limit : 15 }
+            { $match: {"versions.content.modified": {"$gte": d } } },
+            { $sort : {"modified": -1 } }
         ];
     }
     
@@ -190,11 +192,7 @@ api_listwhere.get(function (req, res) {
         },
         json: true // Automatically stringifies the body to JSON
     };
-    //t = {"@id":"_:bnodekRpvFF2w3dB2VDka81QdpM","@type":["http://id.loc.gov/ontologies/bibframe/Title"],"http://id.loc.gov/ontologies/bibframe/mainTitle":[{"@value":"The heir affair"}]}
-    //d.title = dataattributes.findTitle(t);
-    
-    //c = {"@id":"_:bnode7arSs3ZKW7qSKpbY2cVKWh","http://id.loc.gov/ontologies/bibframe/agent":[{"@id":"http://id.loc.gov/authorities/names/n2007046505"}],"http://id.loc.gov/ontologies/bibframe/role":[{"@id":"_:bnodevJ248hJW9Qkz1mca9XM5YF"}],"@type":["http://id.loc.gov/ontologies/bflc/PrimaryContribution"]},{"@id":"http://id.loc.gov/authorities/names/n2007046505","@type":["http://id.loc.gov/ontologies/bibframe/Person"],"http://www.w3.org/2000/01/rdf-schema#label":[{"@value":"Cocks, Heather"}]},{"@id":"_:bnodevJ248hJW9Qkz1mca9XM5YF","http://www.w3.org/2000/01/rdf-schema#label":[{"@value":"author"}],"@type":["http://id.loc.gov/ontologies/bibframe/Role"]};
-    //console.log(dataattributes.findContribution(c));
+
     var rp = require('request-promise');
     rp(options)
         .then(function (data) {
@@ -217,25 +215,29 @@ api_listwhere.get(function (req, res) {
                 delete doc.url;
                 items.push(doc);
             });
-            
             if (view === "text") {
-                fields = Object.keys(items[0]);
-                lines = ""
-                for (f of fields) {
-                    lines += f + "  "
-                }
-                lines += "\n"
-                
-                for (d of items) {
+                if (items.length > 0) {
+                    fields = Object.keys(items[0]);
+                    lines = ""
                     for (f of fields) {
-                        if (d[f] !== undefined) {
-                            lines += d[f] + "  "
-                        }
+                        lines += f + "  "
                     }
                     lines += "\n"
+                    
+                    for (d of items) {
+                        for (f of fields) {
+                            if (d[f] !== undefined) {
+                                lines += d[f] + "  "
+                            }
+                        }
+                        lines += "\n"
+                    }
+                    res.set('Content-Type', 'text/plain');
+                    res.status(200).send(lines);
+                } else {
+                    res.set('Content-Type', 'text/plain');
+                    res.status(200).send("No results found.");
                 }
-                res.set('Content-Type', 'text/plain');
-                res.status(200).send(lines);
             } else {
                 res.set('Content-Type', 'application/json');
                 res.status(200).send(data);
@@ -251,7 +253,7 @@ api_listwhere.get(function (req, res) {
 var api_listconfigswhere = apirouter.route('/listconfigs/');
 api_listconfigswhere.get(function (req, res) {
     
-    var filter = "";
+    var query = [];
     var view = req.query.view;
     
     var where = req.query.where;
@@ -263,35 +265,45 @@ api_listconfigswhere.get(function (req, res) {
         console.log(field);
         console.log(value);
     
-        filter = "filter=%7B%22where%22%3A%20%7B%22" + field + "%22%3A%20%22" + value + "%22%7D%7D";
+        query = [
+            { $match: {[field]: {"$eq": value } } },
+            { $sort : {"modified": -1 } }  
+        ];
     }
     
-    console.log(filter);
-    var url = VERSO_ADDR + "/api/configs?" + filter;
+    console.log(JSON.stringify(query));
+    var url = LDPJS_ADDR + "/ldp/verso/configs";
     
     var options = {
-        method: 'GET',
+        method: 'POST',
         uri: url,
-        json: true // Takes JSON as string and converts to Object
+        body: query,
+        headers: {
+            'Content-type': "application/x-mongoquery+json"
+        },
+        json: true // Automatically stringifies the body to JSON
     };
     var rp = require('request-promise');
     rp(options)
         .then(function (data) {
-            data.forEach(function(d){
-                d.created = d.metadata.createDate;
-                d.modified = d.metadata.updateDate;
-                delete d.json;
-                delete d.metadata;
+            var items = [];
+            data.results.forEach(function(d){
+                var doc = d.data;
+                doc.created = doc.metadata.createDate;
+                doc.modified = doc.metadata.updateDate;
+                delete doc.json;
+                delete doc.metadata;
+                items.push(doc);
             });
             if (view === "text") {
-                fields = Object.keys(data[0]);
+                fields = Object.keys(items[0]);
                 lines = ""
                 for (f of fields) {
                     lines += f + "  "
                 }
                 lines += "\n"
                 
-                for (d of data) {
+                for (d of items) {
                     for (f of fields) {
                         if (d[f] !== undefined) {
                             lines += d[f] + "  "
