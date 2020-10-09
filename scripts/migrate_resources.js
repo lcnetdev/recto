@@ -16,18 +16,23 @@ if (args[0] !== undefined) model = args[0];
 async function theForLoop(url, data) {
     for (var k in data) {
         var c = data[k];
+        var slug = k;
+        if (model == "resources") {
+            slug = JSON.parse(c).name;
+        }
         var options = {
             method: 'POST',
             uri: url,
             body: c,
             headers: {
-                'Slug': k,
+                'Slug': slug,
                 'Content-type': "application/json"
             },
             resolveWithFullResponse: true,
             //json: false // Takes JSON as string and converts to Object
         };
         try {
+            //console.log(options);
             let r = await doRequest(options);
             if (r.statusCode === 201) {
                 console.log("Success: " + options.uri + options.headers.Slug);
