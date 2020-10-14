@@ -4,13 +4,15 @@ const rp = require('request-promise');
 
 const dotenv = require('dotenv');
 dotenv.config({path: '../.env'});
+const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
 
 var dataattributes = require('../lib/dataattributes');
 var args = process.argv.slice(2);
 
-var filter, since, view;
+var filter, since, cataloger_id;
 
 if (args[0] !== undefined) since = args[0];
+if (args[1] !== undefined) cataloger_id = args[1];
 
 var today = new Date();
 if (since === undefined) {
@@ -25,14 +27,18 @@ while (today.getTime() > since.getTime()) {
     var weeknext = new Date(since);
     weeknext.setDate(weeknext.getDate()+7);
     
-    since = since.toISOString();
-    until = weeknext.toISOString();
+    since = since;
+    until = weeknext;
 
     filter = {
-        start: since,
-        end: until,
-        created_filter: "filter[where][and][0][created][gt]=" + since + "&filter[where][and][1][created][lt]=" + until,
-        modified_filter: "filter[where][and][0][modified][gt]=" + since + "&filter[where][and][1][modified][lt]=" + until,
+        start: since.toISOString(),
+        end: until.toISOString(),
+        created_filter: [
+            { "$match": { "$and": [ {"versions.content.created": {"$gte": since, "$lte": until} } ] } }
+        ],
+        modified_filter: [
+            { "$match": { "$and": [ {"versions.content.modified": {"$gte": since, "$lte": until} } ] } }
+        ],
         created: 0,
         modified: 0,
     };
@@ -44,12 +50,18 @@ while (today.getTime() > since.getTime()) {
 
 function produceOutput() {
     if (processed == to_process) {
+        var totalcreated = 0;
+        var totalmodified = 0;
         var lines = "Date                    No. Created        No. Modified\n"
         for (var f of filters) {
+            totalcreated += f.created;
+            totalmodified += f.modified;
             lines += f.start.substr(0, f.start.indexOf('T')) + "\n";
             lines += "  " + f.end.substr(0, f.end.indexOf('T'));
             lines += "              " + f.created + "               " + f.modified + "\n";
         }
+        lines += "\n";
+        lines += "                         " + totalcreated + "               " + totalmodified + "\n";
         console.log("");
         console.log(lines);
         console.log("");
@@ -57,25 +69,57 @@ function produceOutput() {
 }
 
 function getStats(f) {
-    var url = process.env.VERSO_PROXY + "/verso/api/bfs?" + f.created_filter;
+    var url = LDPJS_ADDR + "/ldp/verso/resources";
     var options = {
-        method: 'GET',
+        method: 'POST',
         uri: url,
-        json: true // Takes JSON as string and converts to Object
+        body: f.created_filter,
+        headers: {
+            'Content-type': "application/x-mongoquery+json"
+        },
+        json: true // Automatically stringifies the body to JSON
     };
+    //console.log(f.created_filter);
     //const rp = require('request-promise');
     //const response = await rp(options);
     //return response;
     rp(options)
     .then(function (createddata) {
-        f.created = createddata.length;
+        
+        if (cataloger_id !== undefined) {
+            createddata.results.forEach(function(d){
+                var cid = dataattributes.findCatalogerId(d.data.rdf);
+                if (cid == cataloger_id) {
+                    f.created++;
+                }
+            });
+        } else {
+            f.created = createddata.results.length;
+        }
         processed++;
         
-        var url = process.env.VERSO_PROXY + "/verso/api/bfs?" + f.modified_filter;
-        options.uri = url;
+        var url = LDPJS_ADDR + "/ldp/verso/resources";
+        var options = {
+            method: 'POST',
+            uri: url,
+            body: f.modified_filter,
+            headers: {
+                'Content-type': "application/x-mongoquery+json"
+            },
+            json: true // Automatically stringifies the body to JSON
+        };
         rp(options)
         .then(function (modifieddata) {
-            f.modified = modifieddata.length;
+            if (cataloger_id !== undefined) {
+                modifieddata.results.forEach(function(d){
+                    var cid = dataattributes.findCatalogerId(d.data.rdf);
+                    if (cid == cataloger_id) {
+                        f.modified++;
+                    }
+                });
+            } else {
+                f.modified = modifieddata.results.length;
+            }
             processed++;
             produceOutput();
         })
