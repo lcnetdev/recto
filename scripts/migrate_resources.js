@@ -4,7 +4,7 @@ const rp = require('request-promise');
 const store = require('../../../versoenv/verso/081500.json');
 
 const dotenv = require('dotenv');
-dotenv.config();
+dotenv.config({path: __dirname + '/../.env'});
 const appPort = process.env.APPPORT || 3000;
 
 var args = process.argv.slice(2);
