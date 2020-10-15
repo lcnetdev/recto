@@ -17,7 +17,10 @@ const dotenv = require('dotenv');
 dotenv.config();
 const appPort = process.env.APPPORT || 3000;
 const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
-const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov'
+const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov';
+
+const MONGO_COLLECTION = process.env.MONGO_COLLECTION || "resources";
+
 const JAVA_HOME = process.env.JAVA_HOME;
 const JENA_HOME = process.env.JENA_HOME;
 const JENA_RIOT = process.env.JENA_RIOT;
@@ -30,10 +33,27 @@ const MLUSER = process.env.MLUSER;
 const MLPASS = process.env.MLPASS;
 const OCLCKEY = process.env.OCLCKEY;
 
+
 const ldp = require("ldpjs");
 /******************************************/
+var ldpconfig = {
+    
+    mongodb: {
+        conn: "mongodb://localhost:27017"    ,
+        db: "ldp",
+        collection: MONGO_COLLECTION
+    },
 
-var config = {
+    useConverter: "riot",
+    converters: {
+        riot: {
+            TD: TD,
+            JAVA_HOME: JAVA_HOME,
+            JENA_HOME: JENA_HOME,
+            JENA_RIOT: JENA_RIOT,
+        }
+    },
+    
     createIndexDoc: function(version) {
         var index = {};
         
@@ -61,9 +81,10 @@ var config = {
     }
 };
 
-ldp.setConfig(config);
+ldp.setConfig(ldpconfig);
 /******************************************/
 app.use('/ldp', ldp);
+
 
 app.use(cors());
 app.use(bodyParser.json({
