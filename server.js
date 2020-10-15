@@ -30,7 +30,7 @@ const MLUSER = process.env.MLUSER;
 const MLPASS = process.env.MLPASS;
 const OCLCKEY = process.env.OCLCKEY;
 
-const ldp = require("../../ldpenv/ldpjs/index.js");
+const ldp = require("ldpjs");
 /******************************************/
 
 var config = {
