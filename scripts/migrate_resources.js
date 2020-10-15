@@ -1,6 +1,6 @@
 const rp = require('request-promise');
 
-//const store = require('../../../versoenv/verso/bfpilot.json');
+//const store = require('../../../prodenv/verso/bfpilot.json');
 const store = require('../../../versoenv/verso/081500.json');
 
 const dotenv = require('dotenv');
