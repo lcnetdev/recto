@@ -17,7 +17,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const appPort = process.env.APPPORT || 3000;
 const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
-const bfdbhost = process.env.BFDBHOST ||  'preprod-8230.id.loc.gov';
+const bfdbhost = process.env.BFDBHOST ||  'preprod-8210.id.loc.gov';
 
 const MONGO_COLLECTION = process.env.MONGO_COLLECTION || "resources";
 
