@@ -694,10 +694,11 @@ prof_retrieveLDS.get(function(req, res) {
     var jsonldReturn = [];
 
     console.log("RetrieveLDS");
+    console.log(instanceURL);
 
-    rp(options).then(function(instanceBody) {
+    rp(options)
+    .then(function(instanceBody) {
         //workURL = _.filter(instanceBody["@graph"], p => _.includes(p["@id"], "http://id.loc.gov/resources/"))[0]['bibframe:instanceOf']['@id']
-
         var workURL = null;
         console.log(resourceuri);
         if (!instanceURL.match(/editor-pkg/)){
@@ -808,6 +809,10 @@ prof_retrieveLDS.get(function(req, res) {
             res.status(200).send(instanceBody);
         }
             
+    })
+    .catch(function(err) {
+        console.log(err);
+        res.status(500).send(err.message);
     });
 
     //    res.status(200).send(jsonldReturn);
