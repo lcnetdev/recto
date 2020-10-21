@@ -827,7 +827,17 @@ prof_whichrt.get(function(req,res){
     if ( !uri.startsWith("http") && uri.startsWith('/') ) {
         uri = LDPJS_ADDR + uri
     };
-    req.pipe(request(uri)).pipe(res);
+    //req.pipe(request(uri)).pipe(res);
+    if ( uri.indexOf('bibframe.example.org') > 0 ) {
+        res.status(404).send();
+    } else {
+        req.pipe(request(uri))
+        .on('error', function(err) {
+            console.error(err);
+            res.status(500).send('Error fetching resource via whichrt.');
+        })
+        .pipe(res);
+    }
 });
 
 var prof_checkuri = router.route('/checkuri');
