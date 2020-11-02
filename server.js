@@ -199,7 +199,7 @@ api_listwhere.get(function (req, res) {
             var items = [];
             data.results.forEach(function(d){
                 var doc = d.data;
-                doc.title = dataattributes.findTitle(doc.rdf);
+                doc.title = dataattributes.findTitle(doc.profile, doc.rdf);
                 doc.lccn = dataattributes.findLccn(doc.rdf);
                 doc.contribution = dataattributes.findContribution(doc.rdf);
                 doc.catalogerid = dataattributes.findCatalogerId(doc.rdf);
