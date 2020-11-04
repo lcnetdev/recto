@@ -34,10 +34,12 @@ while (today.getTime() > since.getTime()) {
         start: since.toISOString(),
         end: until.toISOString(),
         created_filter: [
-            { "$match": { "$and": [ {"versions.content.created": {"$gte": since, "$lte": until} } ] } }
+            //{ $match: { $and: [ { created : { $gte: since, $lte: until } } ] } },
+            { $match: { $and: [ { "versions.content.created" : { $gte: since, $lte: until } } ] } },
         ],
         modified_filter: [
-            { "$match": { "$and": [ {"versions.content.modified": {"$gte": since, "$lte": until} } ] } }
+            //{ $match: { $and: [ { modified : { $gte: since, $lte: until } } ] } },
+            { $match: { $and: [ { "versions.content.modified" : { $gte: since, $lte: until } } ] } },
         ],
         created: 0,
         modified: 0,
