@@ -35,6 +35,7 @@ const OCLCKEY = process.env.OCLCKEY;
 
 
 const ldp = require("ldpjs");
+//const ldp = require("../../ldpenv/ldpjs/index");
 /******************************************/
 var ldpconfig = {
     
