@@ -14,32 +14,37 @@ var filter, since, cataloger_id;
 if (args[0] !== undefined) since = args[0];
 if (args[1] !== undefined) cataloger_id = args[1];
 
-var today = new Date();
+var until = new Date(); // default to today.
 if (since === undefined) {
     var since = new Date();
     since.setDate(since.getDate()-7);
 } else {
-    since = new Date(since);
+    if (since.indexOf(':') > 0) {
+        var since_parts = since.split(":");
+        since = new Date(since_parts[0]);
+        until = new Date(since_parts[1]);
+    } else {
+        since = new Date(since);
+    }
 }
 
 filters = [];
-while (today.getTime() > since.getTime()) {
+while (until.getTime() > since.getTime()) {
     var weeknext = new Date(since);
     weeknext.setDate(weeknext.getDate()+7);
     
     since = since;
-    until = weeknext;
 
     filter = {
         start: since.toISOString(),
-        end: until.toISOString(),
+        end: weeknext.toISOString(),
         created_filter: [
-            //{ $match: { $and: [ { created : { $gte: since, $lte: until } } ] } },
-            { $match: { $and: [ { "versions.content.created" : { $gte: since, $lte: until } } ] } },
+            //{ $match: { $and: [ { created : { $gte: since, $lte: weeknext } } ] } },
+            { $match: { $and: [ { "versions.content.created" : { $gte: since, $lte: weeknext } } ] } },
         ],
         modified_filter: [
-            //{ $match: { $and: [ { modified : { $gte: since, $lte: until } } ] } },
-            { $match: { $and: [ { "versions.content.modified" : { $gte: since, $lte: until } } ] } },
+            //{ $match: { $and: [ { modified : { $gte: since, $lte: weeknext } } ] } },
+            { $match: { $and: [ { "versions.content.modified" : { $gte: since, $lte: weeknext } } ] } },
         ],
         created: 0,
         modified: 0,
@@ -54,16 +59,16 @@ function produceOutput() {
     if (processed == to_process) {
         var totalcreated = 0;
         var totalmodified = 0;
-        var lines = "Date                    No. Created        No. Modified\n"
+        var lines = "Date\t\t\tNo. Created\t\t\tNo. Modified\n"
         for (var f of filters) {
             totalcreated += f.created;
             totalmodified += f.modified;
             lines += f.start.substr(0, f.start.indexOf('T')) + "\n";
             lines += "  " + f.end.substr(0, f.end.indexOf('T'));
-            lines += "              " + f.created + "               " + f.modified + "\n";
+            lines += "\t\t\t" + f.created + "\t\t\t" + f.modified + "\n";
         }
         lines += "\n";
-        lines += "                         " + totalcreated + "               " + totalmodified + "\n";
+        lines += "\t\t\t\t" + totalcreated + "\t\t\t" + totalmodified + "\n";
         console.log("");
         console.log(lines);
         console.log("");
