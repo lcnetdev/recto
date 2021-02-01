@@ -75,17 +75,17 @@ function produceOutput() {
         }
         cataloger_handles = [...new Set(cataloger_handles)];
         cataloger_handles = cataloger_handles.sort();
-
-        var lines = "Date Range";
-        for (var c of cataloger_handles) {
-            lines += separator + c;
-        }
-        lines += "\n";
         
         cataloger_totals = {};
         for (var c of cataloger_handles) {
             cataloger_totals[c] = 0;
         }
+        /*
+        var lines = "Date Range";
+        for (var c of cataloger_handles) {
+            lines += separator + c;
+        }
+        lines += "\n";
         for (var f of filters) {
             lines += f.start.substr(0, f.start.indexOf('T'));
             lines += " -> " + f.end.substr(0, f.end.indexOf('T'));
@@ -103,6 +103,36 @@ function produceOutput() {
         for (var c of cataloger_handles) {
             lines += separator + cataloger_totals[c];
         }
+        */
+        var lines = "Cataloger";
+        for (var f of filters) {
+            lines += separator + f.start.substr(0, f.start.indexOf('T'));
+            //lines += " -> " + f.end.substr(0, f.end.indexOf('T'));
+        }
+        lines += separator + "Totals\n";
+        for (var c of cataloger_handles) {
+            if (c === '') {
+                lines += '[empty]';
+            } else {
+                lines += c;
+            }
+            for (var f of filters) {
+                if (f.catalogers[c] !== undefined) {
+                    lines += separator + f.catalogers[c].created;
+                    cataloger_totals[c] += f.catalogers[c].created;
+                } else {
+                    lines += separator + "0";
+                }
+            }
+            lines += separator + cataloger_totals[c];
+            lines += "\n";
+        }
+        lines += "Totals";
+        for (var f of filters) {
+            lines += separator + f.created;
+            totalcreated += f.created;
+        }
+        lines += separator + totalcreated;
         lines += "\n";
         console.log("");
         console.log(lines);
@@ -132,6 +162,10 @@ function getStats(f) {
         createddata.results.forEach(function(d){
             f.created++;
             var cid = dataattributes.findCatalogerId(d.data.rdf);
+            var lccn = dataattributes.findLccn(d.data.rdf);
+            if (cid == "tpease") {
+                console.log(lccn);
+            }
             if (f.catalogers[cid] !== undefined) {
                 f.catalogers[cid].created++;
             } else {
@@ -141,7 +175,6 @@ function getStats(f) {
             }
             
         });
-        console.log(f);
         processed++;
         produceOutput();
         
