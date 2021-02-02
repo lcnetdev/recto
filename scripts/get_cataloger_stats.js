@@ -9,10 +9,34 @@ const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
 var dataattributes = require('../lib/dataattributes');
 var args = process.argv.slice(2);
 
-var filter, since, cataloger_id;
+var since, metric, serialization;
 
 if (args[0] !== undefined) since = args[0];
-if (args[1] !== undefined) var serialization = args[1];
+if (args[1] !== undefined) metric = args[1];
+if (args[2] !== undefined) serialization = args[2];
+
+if (serialization === undefined) {
+    serialization = "tsv";
+}
+if (metric === undefined) {
+    // If metric is undefined, so is serialization
+    metric = "created";
+    serialization = "tsv";
+} else if ( metric == "csv" || metric == "tsv" ) {
+    // The second parameter was the serialization.
+    serialization = metric;
+    metric = "created";
+}
+if (since === undefined) {
+    // nothing was set.  'since' will be handled below.
+    metric = "created";
+    serialization = "tsv";
+} else if ( since == "created" || since == "updated" || since == "posted" ) {
+    // The first parameter is the metric.  If the second parameter was set to the 
+    // serialization, that was handled above.
+    metric = since;
+    metric = "created";
+}
 
 if (serialization == "csv") {
     separator = ",";
@@ -52,8 +76,14 @@ while (until.getTime() > since.getTime()) {
             //{ $match: { $and: [ { modified : { $gte: since, $lte: weeknext } } ] } },
             { $match: { $and: [ { "versions.content.modified" : { $gte: since, $lte: weeknext } } ] } },
         ],
-        created: 0,
-        modified: 0,
+        posted_filter: [
+            { $match: { $or: [ 
+                    { "versions.content.modified" : { $gte: since, $lte: weeknext } },
+                    { "versions.content.created" : { $gte: since, $lte: weeknext } }
+                ] } },
+            { $match: { $and: [ { "versions.content.status" : { $eq: "success" } } ] } },
+        ],
+        count: 0,
         catalogers: {},
     };
     
@@ -64,6 +94,12 @@ while (until.getTime() > since.getTime()) {
 
 function produceOutput() {
     if (processed == to_process) {
+        var totals_label = "Created Totals";
+        if (metric == "posted") {
+            totals_label = "Posted Totals";
+        } else if (metric == "modified") {
+            totals_label = "Modified Totals";   
+        }
         var totalcreated = 0;
         var totalmodified = 0;
         
@@ -109,7 +145,7 @@ function produceOutput() {
             lines += separator + f.start.substr(0, f.start.indexOf('T'));
             //lines += " -> " + f.end.substr(0, f.end.indexOf('T'));
         }
-        lines += separator + "Totals\n";
+        lines += separator + totals_label + "\n";
         for (var c of cataloger_handles) {
             if (c === '') {
                 lines += '[empty]';
@@ -118,8 +154,8 @@ function produceOutput() {
             }
             for (var f of filters) {
                 if (f.catalogers[c] !== undefined) {
-                    lines += separator + f.catalogers[c].created;
-                    cataloger_totals[c] += f.catalogers[c].created;
+                    lines += separator + f.catalogers[c].count;
+                    cataloger_totals[c] += f.catalogers[c].count;
                 } else {
                     lines += separator + "0";
                 }
@@ -127,10 +163,10 @@ function produceOutput() {
             lines += separator + cataloger_totals[c];
             lines += "\n";
         }
-        lines += "Totals";
+        lines += totals_label;
         for (var f of filters) {
-            lines += separator + f.created;
-            totalcreated += f.created;
+            lines += separator + f.count;
+            totalcreated += f.count;
         }
         lines += separator + totalcreated;
         lines += "\n";
@@ -143,78 +179,43 @@ function produceOutput() {
 
 function getStats(f) {
     var url = LDPJS_ADDR + "/ldp/verso/resources";
+    var dofilter = f.created_filter;
+    if (metric == "posted") {
+        dofilter = f.posted_filter;
+    } else if (metric == "modified") {
+        dofilter = f.modified_filter;
+    }
     var options = {
         method: 'POST',
         uri: url,
-        body: f.created_filter,
+        body: dofilter,
         headers: {
             'Content-type': "application/x-mongoquery+json"
         },
         json: true // Automatically stringifies the body to JSON
     };
-    //console.log(f.created_filter);
-    //const rp = require('request-promise');
-    //const response = await rp(options);
-    //return response;
+
     rp(options)
-    .then(function (createddata) {
-        
-        createddata.results.forEach(function(d){
-            f.created++;
+    .then(function (resultdata) {
+        resultdata.results.forEach(function(d){
             var cid = dataattributes.findCatalogerId(d.data.rdf);
-            var lccn = dataattributes.findLccn(d.data.rdf);
-            if (cid == "tpease") {
-                console.log(lccn);
-            }
+            f.count++;
             if (f.catalogers[cid] !== undefined) {
-                f.catalogers[cid].created++;
+                f.catalogers[cid].count++;
             } else {
                 f.catalogers[cid] = {};
-                f.catalogers[cid].created = 1;
-                f.catalogers[cid].modified = 0;
+                f.catalogers[cid].count = 1;
             }
-            
         });
         processed++;
         produceOutput();
-        
-        /*
-        var url = LDPJS_ADDR + "/ldp/verso/resources";
-        var options = {
-            method: 'POST',
-            uri: url,
-            body: f.modified_filter,
-            headers: {
-                'Content-type': "application/x-mongoquery+json"
-            },
-            json: true // Automatically stringifies the body to JSON
-        };
-        rp(options)
-        .then(function (modifieddata) {
-            if (cataloger_id !== undefined) {
-                modifieddata.results.forEach(function(d){
-                    var cid = dataattributes.findCatalogerId(d.data.rdf);
-                    if (cid == cataloger_id) {
-                        f.modified++;
-                    }
-                });
-            } else {
-                f.modified = modifieddata.results.length;
-            }
-            processed++;
-            produceOutput();
-        })
-        .catch(function (err) {
-            console.log(err);
-        });
-        */
    })
    .catch(function (err) {
         console.log(err);
     });
 }
 
-var to_process = filters.length*1;
+var to_process = filters.length;
 var processed = 0;
 for (i = 0; i < filters.length; i++) { 
     getStats(filters[i]);
