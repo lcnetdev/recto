@@ -2,7 +2,11 @@
 
 ## Introduction
 
-_Recto_ is a web application server for use with the Library of Congress' [BIBFRAME editor](https://github.com/lcnetdev/bfe) and its related [profile editor](https://github.com/lcnetdev/profile-edit). It offers authentication to the applications using [Verso](https://github.com/lcnetdev/verso), the storage layer for the BIBFRAME editor and profile editor. _Recto_ is configured to proxy Verso, so that Verso can serve as the authentication and authorization layer for applications hosted by Recto.
+_Recto_ is a web application server for use with the Library of 
+Congress' [BIBFRAME editor](https://github.com/lcnetdev/bfe) and its 
+related [profile editor](https://github.com/lcnetdev/profile-edit). It uses
+[ldpjs](https://github.com/lcnetdev/ldpjs), which is basically a [Linked Data 
+Platform](https://www.w3.org/TR/ldp/) API.
 
 _Recto_ serves as the reference implementation of the Library of Congress' BIBFRAME cataloging environment.
 
@@ -12,9 +16,16 @@ _Recto_ is a [Node.js](https://nodejs.org/) application designed to be built and
 
 ### Prerequisites
 
-* [Verso](https://github.com/lcnetdev/verso)
+* [ldpjs](https://github.com/lcnetdev/ldpjs)
 
-_Recto_ relies on Verso to provide an authentication and authorization layer. To install Verso, see the [Verso documentation](https://github.com/lcnetdev/verso/blob/master/README.md).
+You can npm install `ldpjs`:
+
+```bash
+npm install git+https://github.com/lcnetdev/ldpjs.git
+```
+
+`ldpjs` requires MongoDB.  See the [ldpjs documentation](https://github.com/lcnetdev/ldpjs/blob/main/README.md) for 
+more information about ldpjs.
 
 * [Grunt](https://gruntjs.com/)
 
@@ -22,7 +33,8 @@ Required for building the profile editor submodule.
 
 ### Installation
 
-_Recto_ includes both the BIBFRAME editor and the profile editor using git submodules. To install, create a directory for deployment, navigate to that directory, and then:
+_Recto_ includes both the BIBFRAME editor and the profile editor using git submodules. 
+To install, create a directory for deployment, navigate to that directory, and then:
 
 ```
 git clone --recursive https://github.com/lcnetdev/recto
@@ -55,37 +67,38 @@ Finally, if using pm2 you can start recto with `npm start`, or for dev `npm run 
 
 ### Configuration
 
-Many defaults in _Recto_, the bfe, and the profile editor are set up for the Library of Congress' BIBFRAME pilot. You can configure Recto for your local installation by making the following changes:
+Many defaults in _Recto_, the bfe, and the profile editor are set up for the Library 
+of Congress' BIBFRAME pilot. You can configure Recto for your local installation 
+by making the following changes:
 
 * In `profile-edit/source/index.html`, update the `<base>` tag to the base of your installation, e.g.:
 
-```
+```bash
 <base href="/profile-edit/">
 ```
 
-* In `bfe/static/js/config-dev.js`, update the value of the `rectoBase` variable (on or around line 248) to match your local installation, e.g.:
+* In `bfe/static/js/config-dev.js`, update the value of the `rectoBase` variable 
+(on or around line 248) to match your local installation, e.g.:
 
-```
+```bash
 rectoBase = "http://localhost:3000";
-```
-
-* _Recto_ is configured to proxy Verso to allow cookies to be shared between environments. You can set the address of your Verso proxy with the environment variable `VERSO_PROXY`, e.g.:
-
-```
-VERSO_PROXY=http://localhost:3001 npm start
 ```
 
 For convenience, an npm script is included to run _Recto_ locally for development:
 
-```
+```bash
 npm run local
 ```
 
 ### Running _Recto_
 
-_Recto_ can run as an npm application with the usual `npm start` invocation. In addition, as noted above, a development server can be run with the command `npm run local`.
+_Recto_ can run as an npm application with the usual `npm start` invocation. 
+In addition, as noted above, a development server can be run with the 
+command `npm run local`.
 
-For a more production-ready deployment, you can use the [PM2 Process Manager](http://pm2.keymetrics.io/) to manage your _Recto_ process. To use pm2 to deploy _Recto_:
+For a more production-ready deployment, you can use 
+the [PM2 Process Manager](http://pm2.keymetrics.io/) to manage 
+your _Recto_ process. To use pm2 to deploy _Recto_:
 
 ```
 npm install pm2 -g
