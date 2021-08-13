@@ -18,6 +18,7 @@ dotenv.config();
 const appPort = process.env.APPPORT || 3000;
 const LDPJS_ADDR = process.env.LDPJS_ADDR || 'http://localhost:3000';
 const bfdbhost = process.env.BFDBHOST ||  'preprod-8210.id.loc.gov';
+const posturl = process.env.POSTURL;
 
 const MONGO_COLLECTION = process.env.MONGO_COLLECTION || "resources";
 
@@ -579,7 +580,10 @@ prof_publish.post(function(req,res){
     var name = req.body.name + ".rdf";
     var rdfxml = JSON.parse(req.body.rdfxml); 
     
-    var url = "https://" + bfdbhost + "/post/" + name;
+    console.log(objid);
+    console.log(lccn);
+    
+    var url = posturl;
     var options = {
         method: 'POST',
         uri: url,
@@ -589,32 +593,42 @@ prof_publish.post(function(req,res){
                 'user': MLUSER,
                 'pass': MLPASS,
             },
+        resolveWithFullResponse: true,
         json: false // Takes JSON as string and converts to Object
     };
     var rp = require('request-promise');
     rp(options)
-        .then(function (data) {
+        .then(function (response) {
             // {"name": "72a0a1b6-2eb8-4ee6-8bdf-cd89760d9f9a.rdf","objid": "/resources/instances/c0209952430001",
             // "publish": {"status": "success","message": "posted"}}
-            console.log(data);
-            data = JSON.parse(data);
-            console.log(data.objid)
+            console.log("Response: ");
+            console.log(response.body);
+            data = {}
+            if (response.body != undefined && response.body != "") {
+                data = JSON.parse(response.body);
+            }
+            var location = "";
+            if (response.headers['location'] !== undefined) {
+                location = response.headers['location'];
+                objid = location.replace('http://id.loc.gov', '');
+            }
+            console.log(location);
             
             var resp_data = {}
-            if (data.publish.status == "success") {
+            if (response.statusCode == 201 || response.statusCode == 204) {
                 // IF successful, it is by definition in this case also posted.
                 resp_data = {
-                        "name": req.body.name, 
+                        "name": name, 
                         "url": resources + name, 
-                        "objid": data.objid, 
+                        "objid": objid, 
                         "lccn": lccn, 
                         "publish": {"status":"published"}
                     }
             } else {
                 resp_data = {
-                        "name": req.body.name, 
-                        "objid":  data.objid, 
-                        "publish": {"status": "error","message": data.publish.message }
+                        "name": name, 
+                        "objid":  objid, 
+                        "publish": {"status": "error","message": data }
                     }
             }
             res.set('Content-Type', 'application/json');
